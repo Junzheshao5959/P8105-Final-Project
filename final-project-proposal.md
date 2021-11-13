@@ -23,7 +23,3 @@ Team
 ## The planned analyses / visualizations / coding challenges
 
 ## The planned timeline
-
-test test test
-
-123123

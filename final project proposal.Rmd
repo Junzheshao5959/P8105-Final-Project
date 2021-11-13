@@ -24,8 +24,3 @@ knitr::opts_chunk$set(echo = TRUE)
 ## The planned timeline
 
 
-test test test
-
-123123
-
-
