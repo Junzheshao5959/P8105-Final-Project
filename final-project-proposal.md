@@ -44,6 +44,10 @@ Dec. 11: Final project due
 
 merge file test  
 test 4 test 5  
+<<<<<<< HEAD
 test 6
 =======
 >>>>>>> c078cb702bc40e72d02089e12ac0f63be45ffe18
+=======
+test 6 test 8
+>>>>>>> sjz
