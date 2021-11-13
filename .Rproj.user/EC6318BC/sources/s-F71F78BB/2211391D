@@ -1,9 +1,9 @@
 {
     "id": "2211391D",
-    "path": "~/Downloads/final project proposal.Rmd",
-    "project_path": null,
+    "path": "~/Documents/P8105-Final-Project/final project proposal.Rmd",
+    "project_path": "final project proposal.Rmd",
     "type": "r_markdown",
-    "hash": "0",
+    "hash": "2016383166",
     "contents": "",
     "dirty": false,
     "created": 1636770793115.0,
@@ -17,11 +17,11 @@
         "scrollLine": "0"
     },
     "folds": "",
-    "lastKnownWriteTime": 1636770907,
+    "lastKnownWriteTime": 1636771070,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1636770907734,
+    "last_content_update": 1636771070156,
     "read_only": false,
     "read_only_alternatives": []
 }
