@@ -10,6 +10,8 @@ fontsize: 6pt
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+12345
+
 #### Motivation
 According to the INRIX scorecard, NYC was ranked No. 1 for the worst traffic in the United States, and the NYC subway on time performance has always been an issue as well. In this project, we were interested in whether bicycles can outcompete other transportations in terms of travel time in Manhattan. We focused on the time in a day, weekday versus weekend and seasonal variation to investigate the best time-saving way to commute, if not bicycle.
  
