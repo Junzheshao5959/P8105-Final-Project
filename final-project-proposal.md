@@ -40,7 +40,10 @@ two-minute screencast
 Dec. 5-Dec. 10: Finishing report for detailed information of the
 projects.  
 Dec. 11: Final project due
+<<<<<<< HEAD
 
 merge file test  
 test 4 test 5  
 test 6
+=======
+>>>>>>> c078cb702bc40e72d02089e12ac0f63be45ffe18
