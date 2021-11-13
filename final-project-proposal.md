@@ -18,13 +18,13 @@ New York.
 
 #### The anticipated data sources
 
--   Main dataset - NYC Taxi and Limousine Commission Trip Record Data:
+-   NYC Taxi and Limousine Commission Trip Record Data:
     <https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page>
 
 -   Dataset on Citi Bike Trip Histories:
     <https://ride.citibikenyc.com/system-data>
 
--   Neighborhood Tabulation Areas:
+-   NTA:
     <https://data.cityofnewyork.us/City-Government/2010-Neighborhood-Tabulation-Areas-NTAs-/cpf4-rkhqs>
 
 #### The planned analyses / visualizations / coding challenges
