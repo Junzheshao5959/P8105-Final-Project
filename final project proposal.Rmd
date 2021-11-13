@@ -32,8 +32,3 @@ Nov. 21-27: Create Visualizations (interactive descriptives, interactive plots)
 Nov. 28-Dec. 4: Final integrate code, proofread and test for glitches, two-minute screencast  
 Dec. 5-Dec. 10: Finishing report for detailed information of the projects.  
 Dec. 11: Final project due
-
-merge file test
-
-
-
