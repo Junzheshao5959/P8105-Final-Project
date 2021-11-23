@@ -128,10 +128,10 @@ for (i in year) {
     year_temp <- as.character(i)
     month_temp <- as.character(j)
     if (j < 10) {
-      url <- glue("https://s3.amazonaws.com/tripdata/JC-{year_temp}0{month_temp}-citibike-tripdata.csv.zip")
+      url <- glue("https://s3.amazonaws.com/tripdata/{year_temp}0{month_temp}-citibike-tripdata.csv.zip")
     }
     else {
-      url <- glue("https://s3.amazonaws.com/tripdata/JC-{year_temp}{month_temp}-citibike-tripdata.csv.zip")
+      url <- glue("https://s3.amazonaws.com/tripdata/{year_temp}{month_temp}-citibike-tripdata.csv.zip")
     }
     print(url)
     if (url.exists(url)) {
@@ -139,10 +139,10 @@ for (i in year) {
       temp <- tempfile()
       download.file(url, temp, mode = "wb")
       if (j < 10) {
-        csv_name <- glue("JC-{year_temp}0{month_temp}-citibike-tripdata.csv")
+        csv_name <- glue("{year_temp}0{month_temp}-citibike-tripdata.csv")
       }
       else {
-        csv_name <- glue("JC-{year_temp}{month_temp}-citibike-tripdata.csv")
+        csv_name <- glue("{year_temp}{month_temp}-citibike-tripdata.csv")
       }
       unzip(temp, csv_name)
       citibike_data <- fread(csv_name, fill = TRUE)
