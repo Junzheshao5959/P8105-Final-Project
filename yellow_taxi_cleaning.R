@@ -1,0 +1,33 @@
+library(data.table)
+library(dplyr)
+
+setDTthreads(threads = 12)# customize your threads
+# data discovery --------------------
+test_dt = fread("data/yellow_taxi/2020_1.csv")
+zone_dt = fread("data/taxi+_zone_lookup.csv")
+location_list = zone_dt[Borough == "Manhattan"][,list(LocationID,Zone)]
+PUloation_list = location_list[,.(LocationID,PUZone = Zone)]
+DOloation_list = location_list[,.(LocationID,DOZone = Zone)]
+test_dt_zone = merge.data.table(test_dt, PUloation_list, by.y = "LocationID", by.x = "PULocationID")
+test_dt_zone = merge.data.table(test_dt_zone, DOloation_list, by.y = "LocationID", by.x = "DOLocationID")
+
+# read, clean, and sample -----------
+res_dt = data.table(matrix(ncol = 0, nrow = 0))
+
+for (x in list.files("data/yellow_taxi")) {
+  temp_dt = fread(paste("data/yellow_taxi/",x,sep = ""))
+  temp_dt = merge.data.table(temp_dt, PUloation_list, by.y = "LocationID", by.x = "PULocationID")
+  temp_dt = merge.data.table(temp_dt, DOloation_list, by.y = "LocationID", by.x = "DOLocationID")
+  temp_dt = as.data.table(sample_n(as_tibble(temp_dt),round(nrow(temp_dt)/100)))# random sample 10%
+  res_dt = rbind(res_dt,temp_dt, fill = TRUE)
+  print(x)
+  print(nrow(temp_dt))
+  print(nrow(res_dt))
+}
+
+res_dt =
+  res_dt %>%
+    janitor::clean_names() %>%
+    select(do_location_id, pu_location_id,
+           tpep_pickup_datetime, tpep_dropoff_datetime,
+           trip_distance, pu_zone, do_zone)
