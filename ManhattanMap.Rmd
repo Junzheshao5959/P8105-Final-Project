@@ -13,6 +13,7 @@ library(leaflet)
 library(RJSONIO)
 library(rgdal)
 library(shinydashboard)
+library(DT)
 ```
 
 
@@ -21,13 +22,13 @@ library(shinydashboard)
 #get manhattan geojson
 manhattan <- rgdal::readOGR("data/nyc_taxi_zone.geojson")
 
-manhattan_sub <- manhattan[manhattan$borough == 'Manhattan',] 
+manhattan_sub <- manhattan[manhattan$borough == "Manhattan",] 
 manhattan_sub$id <- 1:69
 ```
 
 ```{r temp manhattan map data}
 #temp manhattan map data
-manhattan_map_data <- manhattan[manhattan$borough == 'Manhattan',]
+manhattan_map_data <- manhattan[manhattan$borough == "Manhattan",]
 manhattan_map_data$id <- 1:69
 ```
 
@@ -43,11 +44,12 @@ ui <- dashboardPage(
         box(width = NULL, solidHeader = TRUE,
           leafletOutput("manhattan_map", height = "70vh")
         ),
-        box(width = NULL,
-          uiOutput("time_table")
-        )
+        dataTableOutput("time_table")
       ),
-       column(width = 3)
+       column(width = 3,
+        dateInput("date", "Date:"),
+        actionButton("button", "Search")
+      )
     )
   )
 )
@@ -81,6 +83,22 @@ server <- function(input, output, session) {
   coordinate_to$lng <- NULL
   coordinate_to$lat <- NULL
   
+  #time table (example of table)
+  time_table <- reactiveValues()
+  time_table <- data.frame(
+    Taxi = c("5min"),
+    Bicycle = c("10min")
+  )
+  
+  #get date (example of Input)
+  date_choose <- reactiveValues()
+  date_choose <- NULL
+  
+  observeEvent(input$button, {
+    date_choose <- input$date
+    print(date_choose)
+  })
+  
   #respond to click
   observeEvent(input$manhattan_map_shape_click, {
     click <- input$manhattan_map_shape_click
@@ -107,10 +125,10 @@ server <- function(input, output, session) {
         }
       }
       
-      leafletProxy('manhattan_map') %>%
-        removeShape(layerId = 'to') %>%
+      leafletProxy("manhattan_map") %>%
+        removeShape(layerId = "to") %>%
         removeShape(layerId = "line") %>%
-        addPolygons(data = map_data$choice, color = '#00FF00', layerId = 'from')
+        addPolygons(data = map_data$choice, color = "#00FF00", layerId = "from")
     }
     #appoint "to"
     else {
@@ -123,9 +141,14 @@ server <- function(input, output, session) {
       
       map_data$choice <- manhattan_map_data[manhattan_map_data$id == to$id,]
       
-      leafletProxy('manhattan_map') %>% 
-        addPolygons(data = map_data$choice, color = '#FF0000', layerId = 'to') %>%
+      leafletProxy("manhattan_map") %>% 
+        addPolygons(data = map_data$choice, color = "#FF0000", layerId = "to") %>%
         addPolylines(lat = c(coordinate_from$lat,coordinate_to$lat), lng = c(coordinate_from$lng,coordinate_to$lng), layerId = "line")
+      
+      #example of table
+      output$time_table <- renderDataTable(
+        dt <- DT::datatable(time_table, options = list(dom = 't'))
+      )
     }
   })
   
@@ -133,7 +156,7 @@ server <- function(input, output, session) {
   output$manhattan_map <- renderLeaflet({
     leaflet() %>%
     addTiles() %>%
-    addPolygons(data = manhattan_sub, color = '#000000', group = 'manhattan',
+    addPolygons(data = manhattan_sub, color = "#000000", group = "manhattan",
                 label = manhattan_sub$zone,layerId = manhattan_sub$id)
   })
 }
