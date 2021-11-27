@@ -222,3 +222,10 @@ for (i in year) {
 trip_data <- bind_rows(trip_2020,trip_2021) %>%
   write_csv("data/citibike_manhattan.csv")
 ```
+
+```{r sample data}
+fread("data/citibike_manhattan.csv") %>%
+  sample_frac(0.01) %>%
+  write_csv("data/citibike_manhattan_sample.csv")
+```
+
