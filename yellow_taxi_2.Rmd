@@ -1,0 +1,43 @@
+---
+title: "yellow_taxi_2"
+author: "Kaitlyn Wang"
+date: "11/22/2021"
+output: html_document
+---
+
+```{r}
+library(data.table)
+```
+
+```{r}
+file_list = 
+  tibble(
+    files = list.files("./data/yellow_taxi"))
+
+read = function(file_name) {
+  
+  file = fread(str_c("./data/yellow_taxi/", file_name))
+  
+  return(file)
+}
+
+yellow_taxi = 
+  file_list %>% 
+  mutate(
+    output = map(files, read)
+  ) %>% 
+  unnest(output) %>% 
+  janitor::clean_names()
+
+```
+
+
+```{r}
+drop_cols = c("passenger_count", "payment_type", "fare_amount", "extra", "mta_tax", "tip_amount", "tolls_amount", "total_amount")
+
+yellow_taxi %>% 
+  mutate() %>% 
+  
+  
+```
+
