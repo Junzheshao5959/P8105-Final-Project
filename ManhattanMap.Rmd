@@ -32,7 +32,6 @@ manhattan_map_data <- manhattan[manhattan$borough == "Manhattan",]
 manhattan_map_data$id <- 1:69
 ```
 
-
 ```{r shiny}
 #design the page
 ui <- dashboardPage( 
@@ -46,7 +45,7 @@ ui <- dashboardPage(
         ),
         dataTableOutput("time_table")
       ),
-       column(width = 3,
+      column(width = 3,
         dateInput("date", "Date:"),
         actionButton("button", "Search")
       )
@@ -84,8 +83,8 @@ server <- function(input, output, session) {
   coordinate_to$lat <- NULL
   
   #time table (example of table)
-  time_table <- reactiveValues()
-  time_table <- data.frame(
+  time_table_dt <- reactiveValues()
+  time_table_dt <- data.frame(
     Taxi = c("5min"),
     Bicycle = c("10min")
   )
@@ -102,9 +101,10 @@ server <- function(input, output, session) {
   #respond to click
   observeEvent(input$manhattan_map_shape_click, {
     click <- input$manhattan_map_shape_click
+    print(click)
     
     #appoint "from"
-    if ((!point_bool$from && !point_bool$to) | (point_bool$from && point_bool$to)) {
+    if ((!point_bool$from && !point_bool$to) || (point_bool$from && point_bool$to)) {
       from$id <- click$id
       
       coordinate_from$lat <- click$lat
@@ -147,12 +147,12 @@ server <- function(input, output, session) {
       
       #example of table
       output$time_table <- renderDataTable(
-        dt <- DT::datatable(time_table, options = list(dom = 't'))
+        dt <- DT::datatable(time_table_dt, options = list(dom = 't'))
       )
     }
   })
   
-  #draw map
+  #initially draw map
   output$manhattan_map <- renderLeaflet({
     leaflet() %>%
     addTiles() %>%

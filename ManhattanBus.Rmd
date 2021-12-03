@@ -19,12 +19,8 @@ stop_data <- fread('data/bus/stops.txt','sep' = ',') %>%
   select(stop_id,stop_lat,stop_lon)
 ```
 
-```{r filter data}
-#filter data
-bus_data_filter <- bus_data %>%
-  filter(endsWith(arrival_time, ':00')) %>%
-  filter(endsWith(departure_time, ':00'))
-  
+```{r stop coordinate}
+#stop coordinate
 bus_coordinate_data <- inner_join(bus_data_filter, stop_data, by = "stop_id")
 ```
 
