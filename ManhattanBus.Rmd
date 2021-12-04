@@ -77,6 +77,6 @@ bus_neighborhood_clean <- bus_neighborhood %>%
     day = ifelse(str_detect(day, "Weekday"), "Weekday", ifelse(str_detect(day,"Sunday"), "Sunday", "Saturday"))
   )
 
-write_csv(bus_neighborhood_clean, "data/bus/bus_schedule_clean", append = FALSE)
+write_csv(bus_neighborhood_clean, "data/bus/bus_schedule_clean.csv", append = FALSE)
 ```
 
