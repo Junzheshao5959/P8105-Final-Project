@@ -27,7 +27,7 @@ manhattan_sub$id <- 1:69
 ```
 
 ```{r temp manhattan map data}
-#temp manhattan map data
+#temporary manhattan map data
 manhattan_map_data <- manhattan[manhattan$borough == "Manhattan",]
 manhattan_map_data$id <- 1:69
 ```
@@ -105,15 +105,14 @@ server <- function(input, output, session) {
     
     #appoint "from"
     if ((!point_bool$from && !point_bool$to) || (point_bool$from && point_bool$to)) {
-      from$id <- click$id
-      
       coordinate_from$lat <- click$lat
       coordinate_from$lng <- click$lng
       
       point_bool$from <- TRUE
       point_bool$to <- FALSE
       
-      if (is.numeric(click$id)) {
+      if (is.numeric(click$id)) { #check whether click "from" or "to" layer
+        from$id <- click$id
         map_data$choice <- manhattan_map_data[manhattan_map_data$id == click$id,]
       }
       else {
@@ -121,10 +120,12 @@ server <- function(input, output, session) {
           map_data$choice <- manhattan_map_data[manhattan_map_data$id == from$id,]
         }
         else if (click$id == "to") {
+          from$id <- to$id
           map_data$choice <- manhattan_map_data[manhattan_map_data$id == to$id,]
         }
       }
       
+      #add layer
       leafletProxy("manhattan_map") %>%
         removeShape(layerId = "to") %>%
         removeShape(layerId = "line") %>%
@@ -132,18 +133,30 @@ server <- function(input, output, session) {
     }
     #appoint "to"
     else {
-      to$id <- click$id
-      
       coordinate_to$lat <- click$lat
       coordinate_to$lng <- click$lng
       
       point_bool$to <- TRUE
       
-      map_data$choice <- manhattan_map_data[manhattan_map_data$id == to$id,]
+      if (is.numeric(click$id)) { #check whether clikc "from" layer
+        to$id <- click$id
+        map_data$choice <- manhattan_map_data[manhattan_map_data$id == click$id,]
+        leafletProxy("manhattan_map") %>% 
+          addPolygons(data = map_data$choice, color = "#FF0000", layerId = "to") %>%
+          addPolylines(lat = c(coordinate_from$lat,coordinate_to$lat), lng = c(coordinate_from$lng,coordinate_to$lng), layerId = "line")
+      }
+      else {
+        if (click$id == "from") {
+          to$id <- from$id
+          map_data$choice <- manhattan_map_data[manhattan_map_data$id == from$id,]
+        }
+        #add layer
+        leafletProxy("manhattan_map") %>%
+          removeShape(layerId =  'from') %>%
+          addPolygons(data = map_data$choice, color = "#FF0000", layerId = "to") %>%
+          addPolylines(lat = c(coordinate_from$lat,coordinate_to$lat), lng = c(coordinate_from$lng,coordinate_to$lng), layerId = "line")
+      }
       
-      leafletProxy("manhattan_map") %>% 
-        addPolygons(data = map_data$choice, color = "#FF0000", layerId = "to") %>%
-        addPolylines(lat = c(coordinate_from$lat,coordinate_to$lat), lng = c(coordinate_from$lng,coordinate_to$lng), layerId = "line")
       
       #example of table
       output$time_table <- renderDataTable(

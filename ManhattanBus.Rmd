@@ -21,7 +21,7 @@ stop_data <- fread('data/bus/stops.txt','sep' = ',') %>%
 
 ```{r stop coordinate}
 #stop coordinate
-bus_coordinate_data <- inner_join(bus_data_filter, stop_data, by = "stop_id")
+bus_coordinate_data <- inner_join(bus_data, stop_data, by = "stop_id")
 ```
 
 
@@ -69,10 +69,14 @@ bus_neighborhood <- bus_coordinate_data %>%
 
 ```{r reselect data}
 #reselect data
-bus_neighborhood <- bus_neighborhood %>%
+bus_neighborhood_clean <- bus_neighborhood %>%
   select(trip_id:stop_id,stop_lat:neighborhood_id) %>%
+  separate(trip_id, sep = "_", into = c("split1","day","line","split2")) %>%
+  select(day:line,arrival_time:neighborhood_id) %>%
   mutate(
-    day_type = 
+    day = ifelse(str_detect(day, "Weekday"), "Weekday", ifelse(str_detect(day,"Sunday"), "Sunday", "Saturday"))
   )
+
+write_csv(bus_neighborhood_clean, "data/bus/bus_schedule_clean", append = FALSE)
 ```
 
