@@ -7,12 +7,10 @@ citibike =
     id = seq(1:nrow(citibike))
   )
 
-distance = function (lat1, long1, lat2, long2) {
+distance = function(lat1, long1, lat2, long2) {
   rad = pi/180
   lat1_rad = lat1 * rad
-  long1_rad = long1 * rad
   lat2_rad = lat2 * rad
-  long2_rad = long2 * rad
   dlon = (long2 - long1) * rad
   dlat = (lat2 - lat2) * rad
 
@@ -60,9 +58,27 @@ citibike_dis =
 
 citibike_2 = inner_join(citibike_1, citibike_dis, by = "id")
 
-citibike =
+citibike_3 =
   inner_join(citibike, citibike_2, by = "id") %>%
-  select(-c(id, long1, lat1, long2, lat2))
+  select(-c(id, long1, lat1, long2, lat2)) %>%
+  mutate(
+    end_time = as.POSIXct(end_time),
+    start_time = as.POSIXct(start_time)) %>%
+  mutate(
+    time_diff_min = round(as.numeric(difftime(end_time, start_time, units = "mins")), digits = 2)) %>%
+  separate(start_time, into = c("start_date", "start_time"), sep = " ") %>%
+  separate(end_time, into = c("end_date", "end_time"), sep = " ") %>%
+  relocate(time_diff_min, .before = start_station_latitude) %>%
+  rename(date = start_date) %>%
+  select(-end_date)
+
+
+
+if (all(citibike_3$start_date == citibike_3$start_date))
+{
+  print("TRUE")
+}
+
 
 
 
