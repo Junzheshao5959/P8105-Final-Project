@@ -49,14 +49,10 @@ ui <- dashboardPage(
       ),
        column(width = 3,
         dateInput("date", "Choose date:"),
-        selectInput("select", "Pick up location", 
-                       choices = list("Choice 1" = 1, 
-                                      "Choice 2" = 2,
-                                      "Choice 3" = 3)), 
-        selectInput("select", "Drop off location", 
-                    choices = list("Choice 1" = 1, 
-                                      "Choice 2" = 2,
-                                      "Choice 3" = 3)), 
+        selectInput("pick_up", "Pick up location", 
+                       choices = as.list(manhattan_sub$zone)), 
+        selectInput("drop_off", "Drop off location", 
+                    choices = as.list(manhattan_sub$zone)), 
         actionButton("button", "Search")
       )
     )
@@ -94,7 +90,7 @@ server <- function(input, output, session) {
   
   #time table (example of table)
   time_table <- reactiveValues()
-  time_table <- data.frame(
+  time_table <- data.frame( 
     Taxi = c("5min"),
     Bicycle = c("10min")
   )
@@ -103,9 +99,19 @@ server <- function(input, output, session) {
   date_choose <- reactiveValues()
   date_choose <- NULL
   
+  pick_up_choose <- reactiveValues()
+  pick_up_choose <- NULL
+  
+  drop_off_choose <- reactiveValues()
+  drop_off_choose <- NULL
+
   observeEvent(input$button, {
-    date_choose <- input$date
+    date_choose <- input$date 
+    pick_up_choose <- input$pick_up
+    drop_off_choose <- input$drop_off
     print(date_choose)
+    print(pick_up_choose)
+    print(drop_off_choose)
   })
   
   #respond to click
