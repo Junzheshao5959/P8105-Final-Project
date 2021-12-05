@@ -129,7 +129,12 @@ server <- function(input, output, session) {
       leafletProxy("manhattan_map") %>%
         removeShape(layerId = "to") %>%
         removeShape(layerId = "line") %>%
-        addPolygons(data = map_data$choice, color = "#00FF00", layerId = "from")
+        addPolygons(data = map_data$choice, 
+                    color = "#556B2F", 
+                    fillColor = "556B2F", 
+                    fillOpacity = 0.5,
+                    weight = 1, 
+                    layerId = "from")
     }
     #appoint "to"
     else {
@@ -143,8 +148,14 @@ server <- function(input, output, session) {
       map_data$choice <- manhattan_map_data[manhattan_map_data$id == to$id,]
       
       leafletProxy("manhattan_map") %>% 
-        addPolygons(data = map_data$choice, color = "#FF0000", layerId = "to") %>%
-        addPolylines(lat = c(coordinate_from$lat,coordinate_to$lat), lng = c(coordinate_from$lng,coordinate_to$lng), layerId = "line")
+        addPolygons(data = map_data$choice, 
+                    color = "#8B0000", 
+                    fillColor = "#8B0000",
+                    opacity = 1, 
+                    fillOpacity = 0.5, 
+                    weight = 1, 
+                    layerId = "to") %>%
+        addPolylines(lat = c(coordinate_from$lat,coordinate_to$lat), lng = c(coordinate_from$lng,coordinate_to$lng), layerId = "line", color = "navy", weight = 2, opacity = 0.5)
       
       #example of table
       output$time_table <- renderDataTable(
@@ -159,9 +170,11 @@ server <- function(input, output, session) {
     addTiles() %>%
     addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>% 
     addPolygons(data = manhattan_sub, 
-                color = "black",
-                fillColor = topo.colors(10, alpha = NULL), 
-                stroke = FALSE, 
+                color = "#444444",
+                smoothFactor = 0.5, 
+                weight = 1, 
+                fillColor = topo.colors(20),
+                highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE), 
                 group = "manhattan",
                 label = manhattan_sub$zone,
                 layerId = manhattan_sub$id) 
@@ -169,5 +182,6 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
 ```
 
