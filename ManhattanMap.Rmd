@@ -48,7 +48,15 @@ ui <- dashboardPage(
         dataTableOutput("time_table")
       ),
        column(width = 3,
-        dateInput("date", "Date:"),
+        dateInput("date", "Choose date:"),
+        selectInput("select", "Pick up location", 
+                       choices = list("Choice 1" = 1, 
+                                      "Choice 2" = 2,
+                                      "Choice 3" = 3)), 
+        selectInput("select", "Drop off location", 
+                    choices = list("Choice 1" = 1, 
+                                      "Choice 2" = 2,
+                                      "Choice 3" = 3)), 
         actionButton("button", "Search")
       )
     )
@@ -103,7 +111,7 @@ server <- function(input, output, session) {
   #respond to click
   observeEvent(input$manhattan_map_shape_click, {
     click <- input$manhattan_map_shape_click
-    
+
     #appoint "from"
     if ((!point_bool$from && !point_bool$to) | (point_bool$from && point_bool$to)) {
       from$id <- click$id
@@ -170,11 +178,12 @@ server <- function(input, output, session) {
     addTiles() %>%
     addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>% 
     addPolygons(data = manhattan_sub, 
-                color = "#444444",
+                color = "white",
                 smoothFactor = 0.5, 
                 weight = 1, 
                 fillColor = topo.colors(20),
-                highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE), 
+                highlightOptions = highlightOptions(color = "#444444", weight = 2, bringToFront = TRUE), 
+                dashArray = 3, 
                 group = "manhattan",
                 label = manhattan_sub$zone,
                 layerId = manhattan_sub$id) 
