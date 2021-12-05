@@ -3,6 +3,7 @@ title: "Map Test"
 author: "Keming Zhang"
 date: "11/24/2021"
 output: html_document
+runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
@@ -154,10 +155,16 @@ server <- function(input, output, session) {
   
   #draw map
   output$manhattan_map <- renderLeaflet({
-    leaflet() %>%
+    leaflet(options = leafletOptions(minZoom = 0, maxZoom = 18)) %>%
     addTiles() %>%
-    addPolygons(data = manhattan_sub, color = "#000000", group = "manhattan",
-                label = manhattan_sub$zone,layerId = manhattan_sub$id)
+    addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>% 
+    addPolygons(data = manhattan_sub, 
+                color = "black",
+                fillColor = topo.colors(10, alpha = NULL), 
+                stroke = FALSE, 
+                group = "manhattan",
+                label = manhattan_sub$zone,
+                layerId = manhattan_sub$id) 
   })
 }
 
