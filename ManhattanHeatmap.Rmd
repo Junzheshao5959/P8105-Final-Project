@@ -1,0 +1,122 @@
+---
+title: "Manhattan Heatmap"
+author: "Keming Zhang"
+date: "12/5/2021"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(shiny)
+library(leaflet)
+library(RJSONIO)
+library(rgdal)
+library(shinydashboard)
+library(DT)
+```
+
+
+
+```{r get manhattan geojson}
+#get manhattan geojson
+manhattan <- rgdal::readOGR("data/nyc_taxi_zone.geojson")
+```
+
+```{r temp manhattan map data}
+#temporary manhattan map data
+manhattan_map_data <- manhattan[manhattan$borough == "Manhattan",]
+manhattan_map_data$id <- 1:69
+```
+
+```{r}
+pal = colorNumeric(colorRamp(c('blue', 'white','red')), range(1:69))
+```
+
+
+```{r shiny}
+#design the page
+ui <- dashboardPage( 
+  dashboardHeader(disable = TRUE),
+  dashboardSidebar(disable = TRUE),
+  dashboardBody(
+    fluidRow(
+      column(width = 9,
+        box(width = NULL, solidHeader = TRUE,
+          leafletOutput("manhattan_map", height = "100vh")
+        )
+      ),
+      column(width = 3,
+        dateInput("date", "Date:"),
+        actionButton("button", "Search")
+      )
+    )
+  )
+)
+
+#server
+server <- function(input, output, session) {
+  
+  #map data
+  map_data <- reactiveValues()
+  map_data$choice <- manhattan_map_data
+  map_data$speed <- NULL
+  
+  #record the chose zone id
+  choice <- reactiveValues()
+  choice$id <- NULL
+  
+  #time table (example of table)
+  time_table_dt <- reactiveValues()
+  time_table_dt <- data.frame(
+    Taxi = c("5min"),
+    Bicycle = c("10min")
+  )
+  
+  #get date (example of Input)
+  date_choose <- reactiveValues()
+  date_choose <- NULL
+  
+  observeEvent(input$button, {
+    date_choose <- input$date
+    print(date_choose)
+  })
+  
+  #respond to click
+  observeEvent(input$manhattan_map_shape_click, {
+    click <- input$manhattan_map_shape_click
+    print(click)
+      
+    map_data$speed <- runif(69,1,69)
+      
+    if (is.numeric(click$id)) { #check whether click "from" or "to" layer
+        choice$id <- click$id
+        map_data$choice <- manhattan_map_data[manhattan_map_data$id == click$id,]
+    }
+    else {
+      map_data$choice <- manhattan_map_data[manhattan_map_data$id == choice$id,]
+    }
+    
+    
+      
+    #add layer
+    leafletProxy("manhattan_map") %>%
+      addPolygons(data = map_data$choice, color = "#00FF00", layerId = "choice") %>%
+      addPolygons(data = manhattan_map_data, color = "white", fillOpacity = 2, fillColor = ~pal(map_data$speed), group = "manhattan_heat",
+              label = manhattan_map_data$zone,layerId = manhattan_map_data$id) %>%
+      addLegend(position = "bottomright", pal = pal, values = map_data$speed, title = "Speed", opacity = 2, layerId = "speed")
+  })
+  
+  #initially draw map
+  output$manhattan_map <- renderLeaflet({
+    leaflet() %>%
+    addTiles() %>%
+    addPolygons(data = manhattan_map_data, color = "#000000", group = "manhattan",
+                label = manhattan_map_data$zone,layerId = manhattan_map_data$id)
+  })
+}
+
+shinyApp(ui, server)
+```
+
