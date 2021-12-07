@@ -3,6 +3,7 @@ title: "Manhattan Heatmap"
 author: "Keming Zhang"
 date: "12/5/2021"
 output: html_document
+runtime: shiny
 ---
 
 
@@ -97,23 +98,30 @@ server <- function(input, output, session) {
     else {
       map_data$choice <- manhattan_map_data[manhattan_map_data$id == choice$id,]
     }
-    
-    
       
     #add layer
     leafletProxy("manhattan_map") %>%
-      addPolygons(data = map_data$choice, color = "#00FF00", layerId = "choice") %>%
       addPolygons(data = manhattan_map_data, color = "white", fillOpacity = 2, fillColor = ~pal(map_data$speed), group = "manhattan_heat",
               label = manhattan_map_data$zone,layerId = manhattan_map_data$id) %>%
-      addLegend(position = "bottomright", pal = pal, values = map_data$speed, title = "Speed", opacity = 2, layerId = "speed")
+      addLegend(position = "bottomright", pal = pal, values = map_data$speed, title = "Speed", opacity = 2, layerId = "speed") %>%
+      addPolygons(data = map_data$choice, color = "#00FF00", layerId = "choice")
   })
   
   #initially draw map
   output$manhattan_map <- renderLeaflet({
     leaflet() %>%
     addTiles() %>%
-    addPolygons(data = manhattan_map_data, color = "#000000", group = "manhattan",
-                label = manhattan_map_data$zone,layerId = manhattan_map_data$id)
+    addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE)) %>%
+    addPolygons(data = manhattan_map_data,
+                color = "white",
+                smoothFactor = 0.5,
+                weight = 1,
+                group = "manhattan",
+                fillColor = topo.colors(20),
+                highlightOptions = highlightOptions(color = "#444444", weight = 2, bringToFront = TRUE), 
+                dashArray = 3,
+                label = manhattan_map_data$zone,
+                layerId = manhattan_map_data$id)
   })
 }
 
