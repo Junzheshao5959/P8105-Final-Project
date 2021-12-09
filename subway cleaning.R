@@ -51,14 +51,13 @@ subway_neighborhood <- subway_coord %>%
 
 
 #reselect data
-subway_neighborhood_clean <- subway_neighborhood %>%
-  select(trip_id:stop_id,stop_lat:neighborhood_id) %>%
-  separate(trip_id, sep = "_", into = c("split1","day","line","split2")) %>%
-  select(split1:line,arrival_time:neighborhood_id) %>%
+subway_neighborhood_clean =
+  subway_neighborhood %>%
+  select(-c(stop_headsign, pickup_type, drop_off_type, shape_dist_traveled)) %>%
+  separate(trip_id, sep = "_", into = c("day", "train_id", "line")) %>%
   mutate(
-    day = ifelse(str_detect(split1, "Weekday"), "Weekday", ifelse(str_detect(split1,"Sunday"), "Sunday", "Saturday"))
-  ) %>%
-  select(-split1)
-write_csv(subway_neighborhood_clean, "data/subway/subway_schedule_clean.csv", append = FALSE)
+    day = ifelse(str_detect(day, "Weekday"), "Weekday", ifelse(str_detect(day,"Sunday"), "Sunday", "Saturday"))
+  )
 
+write_csv(subway_neighborhood_clean, "data/subway/subway_schedule_clean.csv", append = FALSE)
 
