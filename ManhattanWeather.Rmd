@@ -8,6 +8,11 @@ output: html_document
 ```{r}
 library(dplyr)
 library(rnoaa)
+library(tidyverse)
+library(geojsonR)
+library(sp)
+library(data.table)
+library(glue)
 ```
 
 
@@ -68,7 +73,7 @@ unique(weather_station_neighborhood$id)
 manhattan_data <- meteo_pull_monitors("USW00094728", 
                              date_min = "2020-01-01", 
                              date_max = "2021-07-31", 
-                             var = c("id","prcp","tavg","tmax","tmin","awnd"))
+                             var = c("all"))
 
 write_csv(manhattan_data, "data/manhattan_weather.csv", append = FALSE)
 ```

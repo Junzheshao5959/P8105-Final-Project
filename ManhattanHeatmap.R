@@ -1,18 +1,5 @@
----
-title: "Manhattan Heatmap"
-author: "Keming Zhang"
-date: "12/5/2021"
-output: html_document
-runtime: shiny
----
-
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
 library(tidyverse)
 library(data.table)
-library(dplyr)
 library(shiny)
 library(shinyWidgets)
 library(leaflet)
@@ -22,56 +9,47 @@ library(shinydashboard)
 library(DT)
 library(rlist)
 library(shinyalert)
-setDTthreads(threads = 16)
-```
+library(dtplyr)
+setDTthreads(threads = 4)
 
-
-
-```{r get manhattan geojson}
 #get manhattan geojson
 manhattan <- rgdal::readOGR("data/nyc_taxi_zone.geojson")
-test_dt <- fread("data/test_dt_V1.csv")
-test_dt <- test_dt %>%
-  mutate(
-    hour = unclass(as.POSIXlt(tpep_pickup_datetime))$hour
-  )
-```
 
-```{r temp manhattan map data}
+manhattan_sub <- manhattan[manhattan$borough == "Manhattan",]
+manhattan_sub$id <- 1:69
+
 #temporary manhattan map data
 manhattan_map_data <- manhattan[manhattan$borough == "Manhattan",]
 manhattan_map_data$id <- 1:69
-```
 
-```{r}
 zone_list <- manhattan_map_data$zone
-mean_speed_list <- c()
+test_dt <- fread("data/test_dt_V1.csv")
+test_dt <- test_dt[,hour := unclass(as.POSIXlt(tpep_pickup_datetime))$hour]
+head(test_dt)
+
+#calculate mean speed of each zone
 calculate_mean_speed <- function(PU,Type,month_choose,day_choose,time_range) {
+  mean_speed_list <- c()
   progress <- shiny::Progress$new()
   on.exit(progress$close())
   progress$set(message = "Calculating Velocity", value = 0)
+
   for (zone in zone_list) {
-    mean_speed <- test_dt %>%
-      filter(PUZone == PU, DOZone == zone, type == Type, month %in% month_choose,
-             week %in% day_choose, hour %in% time_range)
+    mean_speed <- test_dt[PUZone == PU][DOZone == zone][type == Type][month %in% month_choose][week %in% day_choose][hour %in% time_range]
+    print(mean_speed)
     progress$inc(1/69, detail = zone)
-    mean_speed_list <- c(mean_speed_list, mean(mean_speed$velocity))
+    mean_speed_list <- c(mean_speed_list, mean(mean_speed[,velocity],na.rm = TRUE))
   }
   return(replace(mean_speed_list,is.nan(mean_speed_list),NA))
 }
-```
 
-```{r}
 month <- c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 time <- c("AM","Midday","PM","Evening","Night")
 time_start_dictionary <- c("AM" = 7, "Midday" = 10, "PM" = 16, "Evening" = 19, "Night" = 0)
 time_end_dictionary <- c("AM" = 10, "Midday" = 16, "PM" = 19, "Evening" = 24, "Night" = 7)
-```
 
-
-```{r shiny}
-#design the page
+#design
 ui <- dashboardPage(
   dashboardHeader(title = "Velocity Heatmap",
                   tags$li(a(href = 'http://www.google.com',icon("times-circle","fa-3x"),
@@ -82,7 +60,7 @@ ui <- dashboardPage(
       useShinyalert(),
       column(width = 9,
              box(width = NULL, solidHeader = TRUE,
-                 leafletOutput("manhattan_map", height = "100vh")
+                 leafletOutput("manhattan_map", height = "85vh")
              )
       ),
       column(width = 3,
@@ -112,7 +90,7 @@ server <- function(input, output, session) {
   pu_zone <- reactiveValues()
   pu_zone$zone <- NULL
   pu_zone$speed <- NULL
-  
+
   #vehicle type
   type <- reactiveValues()
   type <- NULL
@@ -124,41 +102,43 @@ server <- function(input, output, session) {
   #get month
   month_choose <- reactiveValues()
   month_choose <- NULL
-  
+
   #get day
   day_choose <- reactiveValues()
   day_choose <- NULL
-  
+
   #get time
   time_choose <- reactiveValues()
   time_choose <- NULL
-  
+
+  time_range <- reactiveValues()
+  time_range <- NULL
+
   observeEvent(input$button, {
     type <- input$type
     month_choose <- input$month
     day_choose <- input$day
     time_choose <- input$time
-    
+
     print(type)
     print(month_choose)
     print(day_choose)
     print(time_choose)
-    
+
     month_choose <- c(which(month == month_choose[1]):which(month == month_choose[2]))
     day_choose <- c(which(day == day_choose[1]):which(day == day_choose[2]))
     day_choose <- replace(day_choose,day_choose == 7,0)
-    
-    time_range <- c()
+
     for (i in time_choose) {
-      time_range <- c(time_start_dictionary[i]:time_end_dictionary[i] - 1,time_range)
+      time_range <- c(time_start_dictionary[[i]]:time_end_dictionary[[i]] - 1,time_range)
     }
-    
+
     print(type)
     print(month_choose)
     print(day_choose)
-    print(time_choose)
-                    
-    
+    print(time_range)
+
+
     if (is.null(pu_zone$zone)) {
       shinyalert(title = "Warning", text = "Please choose one zone on the map!", type = "error", html = TRUE)
       return(0)
@@ -170,9 +150,16 @@ server <- function(input, output, session) {
 
     print(map_data$speed)
 
-    color_pal <- colorNumeric(colorRamp(c('blue', 'white','red')),
-                              domain = map_data$speed,
-                              na.color = "#000000",)
+    if (sum(is.na(map_data$speed)) == 69) {
+      color_pal <- colorNumeric(colorRamp(c('blue', 'white','red')),
+                                domain = c(0:10),
+                                na.color = "#000000")
+    }
+    else {
+      color_pal <- colorNumeric(colorRamp(c('blue', 'white','red')),
+                                domain = map_data$speed,
+                                na.color = "#000000",)
+    }
 
     #add layer
     leafletProxy("manhattan_map") %>%
@@ -196,9 +183,9 @@ server <- function(input, output, session) {
     else {
       map_data$choice <- manhattan_map_data[manhattan_map_data$id == choice$id,]
     }
-    
+
     pu_zone$zone <- manhattan_map_data[manhattan_map_data$id == choice$id,]$zone
-    
+
     #add layer
     leafletProxy("manhattan_map") %>%
       addPolygons(data = map_data$choice, color = "#00FF00", layerId = "choice", label = pu_zone$zone)
@@ -224,6 +211,3 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
-
-```
-

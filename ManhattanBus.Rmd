@@ -71,8 +71,11 @@ bus_neighborhood <- bus_coordinate_data %>%
 #reselect data
 bus_neighborhood_clean <- bus_neighborhood %>%
   select(trip_id:stop_id,stop_lat:neighborhood_id) %>%
+  mutate(
+    bus_id = trip_id
+  ) %>%
   separate(trip_id, sep = "_", into = c("split1","day","line","split2")) %>%
-  select(day:line,arrival_time:neighborhood_id) %>%
+  select(bus_id,day:line,arrival_time:neighborhood_id) %>%
   mutate(
     day = ifelse(str_detect(day, "Weekday"), "Weekday", ifelse(str_detect(day,"Sunday"), "Sunday", "Saturday"))
   )
