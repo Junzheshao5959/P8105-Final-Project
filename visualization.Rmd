@@ -11,6 +11,16 @@ output:
 library(tidyverse)
 library(ggplot2)
 library(patchwork)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  fig.width = 10,
+  fig.height = 6,
+  out.width = "90%"
+)
 ```
 
 ## Visualization 
@@ -38,7 +48,7 @@ To get a general understanding of the travel time and the travel velocity of eac
 ## Taxi Travel Time vs. Bike Travel Time
 ```{r}
 # taxi heatmap for duration
-#hp1 =
+hp1 =
   taxi_df_sample %>%
   group_by(season, time_of_day) %>%
   mutate(grp_mean = mean(duration)) %>%
@@ -52,7 +62,7 @@ To get a general understanding of the travel time and the travel velocity of eac
 
 ```{r}
 # bike heatmap for duration 
-#hp2 =
+hp2 =
   bike_df_sample %>%
   group_by(season, time_of_day) %>%
   mutate(grp_mean = mean(duration)) %>%
@@ -63,40 +73,42 @@ To get a general understanding of the travel time and the travel velocity of eac
   geom_text(aes(label = round(grp_mean, digits = 2), color = "white")) +
   labs(title = "Duration of Bike Heatmap", x = "Season", y ="Time of Day", fill = "Mean Duration(mins)")
 
-#hp1 + hp2
+hp1 + hp2
 ```
 
 These two heatmaps compare the travel time between taxi and bike. We can see that the travel time for bike are overall greater than the travel time for taxi for all day and all seasons. The travel times are the greatest during rush hour from 4pm to 7pm for both taxi and bike. Across four seasons, the travel time is the greatest in winter for taxi and the travel time is the greatest in spring for bike. 
 
 ```{r}
 # taxi heatmap for velocity
-#hp3 =
+hp3 =
   taxi_df_sample %>%
   group_by(season, time_of_day) %>%
   mutate(grp_mean = mean(velocity)) %>%
   select(season, time_of_day, grp_mean) %>%
   ggplot(aes(season, time_of_day)) +
   geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
-  scale_fill_gradient(low = "red", high = "white", limits = c(10, 27)) +
+  scale_fill_gradient(low = "white", high = "red", limits = c(10, 27)) +
   geom_text(aes(label = round(grp_mean, digits = 2))) +
   labs(title = "Velocity of Taxi Heatmap", x = "Season", y ="Time of Day", fill = "Mean Velocity(km/h)")
 ```
 
 ```{r}
 # bike heatmap for velocity
-#hp4 =
+hp4 =
   bike_df_sample %>%
   group_by(season, time_of_day) %>%
   mutate(grp_mean = mean(velocity)) %>%
   select(season, time_of_day, grp_mean) %>%
   ggplot(aes(season, time_of_day)) +
   geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
-  scale_fill_gradient(low = "red", high = "white", limits = c(10, 27)) +
+  scale_fill_gradient(low = "white", high = "red", limits = c(10, 27)) +
   geom_text(aes(label = round(grp_mean, digits = 2))) +
   labs(title = "Velocity of Bike Heatmap", x = "Season", y ="Time of Day", fill = "Mean Velocity(km/h)")
 
-#hp3 + hp4
+hp3 + hp4
 ```
+
+These two heatmaps compare the velocity between taxi and bike. We can see that the velocity for bike is overall smaller than the velocity for taxi all day and all seasons. Taxi travels the slowest during rush hour from 4pm to 7pm all seasons except fall and taxi travels the slowest in winter. Similar to taxi, bike travels the slowest during rush hour from 4pm to 7pm all seasons except fall. 
 
 ```{r}
 # combine taxi bike, subway datasets to make boxplot
