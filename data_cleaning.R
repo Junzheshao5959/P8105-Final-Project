@@ -58,7 +58,7 @@ for (x in list.files("raw_data/data/yellow_taxi")){
 
 
 # t test preparation: --------------------
-timeDate <- as.POSIXct("2015-10-19 10:15")   
+timeDate <- as.POSIXct("2015-10-19 10:15")
 str(timeDate)
 unlist(timeDate)
 datetime <- as.POSIXct("2020-01-01T00:55:04Z",
@@ -177,4 +177,13 @@ x = c(1,2,3,4,5)
 y = c(1,2,3)
 res = t.test(x,y)
 
-             
+
+mta_dt  = fread('subway_schedule_clean.csv')
+test_mta_dt = mta_dt[,.SD[sample(.N,5*.N, replace = T)],by = train_id]
+test_mta_dt = test_mta_dt[, tpep_pickup_datetime := as.POSIXct(departure_time,
+                                                               format = "%H:%M:%S",
+                                                               tz = "America/New_York")]
+test_mta_dt_do = mta_dt[,.SD[sample(.N,5*.N, replace = T)],by = train_id][, tpep_dropoff_datetime := as.POSIXct(arrival_time,
+                                                                                                                format = "%H:%M:%S",
+                                                                                                                tz = "America/New_York")]
+test_mta_dt = cbind()
