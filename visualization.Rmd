@@ -1,0 +1,123 @@
+---
+title: "visualization"
+author: "Yuchen Zheng"
+date: "12/10/2021"
+output:
+  html_document:
+    code_folding: hide
+---
+
+```{r, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(ggplot2)
+library(patchwork)
+```
+
+## Visualization 
+
+```{r, message = FALSE}
+# read in sample data
+taxi_df_sample = 
+  read_csv("./sample_data/taxi_sample.csv") %>% 
+  mutate(time_of_day = factor(time_of_day, levels = c("early_morning", "rush_hour_am", "midday", "rush_hour_pm", "evening")),
+         season = factor(season, levels = c("spring", "summer", "fall", "winter")))
+
+bike_df_sample = 
+  read_csv("./sample_data/bike_sample.csv") %>% 
+  mutate(time_of_day = factor(time_of_day, levels = c("early_morning", "rush_hour_am", "midday", "rush_hour_pm", "evening")),
+         season = factor(season, levels = c("spring", "summer", "fall", "winter")))
+
+subway_df_sample = 
+  read_csv("./sample_data/subway_sample.csv") %>% 
+  mutate(time_of_day = factor(time_of_day, levels = c("early_morning", "rush_hour_am", "midday", "rush_hour_pm", "evening")),
+         season = factor(season, levels = c("spring", "summer", "fall", "winter")))
+```
+
+To get a general understanding of the travel time and the travel velocity of each type of transportation, we made heatmaps and boxplots to show travel time and velocity during different time periods of the day and across seasons.
+
+## Taxi Travel Time vs. Bike Travel Time
+```{r}
+# taxi heatmap for duration
+#hp1 =
+  taxi_df_sample %>%
+  group_by(season, time_of_day) %>%
+  mutate(grp_mean = mean(duration)) %>%
+  select(season, time_of_day, grp_mean) %>%
+  ggplot(aes(season, time_of_day)) +
+  geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
+  scale_fill_gradient(low = "lightblue", high = "black", limits = c(8, 16)) +
+  geom_text(aes(label = round(grp_mean, digits = 2), color = "white")) +
+  labs(title = "Duration of Taxi Heatmap", x = "Season", y ="Time of Day", fill = "Mean Duration (mins)")
+```
+
+```{r}
+# bike heatmap for duration 
+#hp2 =
+  bike_df_sample %>%
+  group_by(season, time_of_day) %>%
+  mutate(grp_mean = mean(duration)) %>%
+  select(season, time_of_day, grp_mean) %>%
+  ggplot(aes(season, time_of_day)) +
+  geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
+  scale_fill_gradient(low = "lightblue", high = "black", limits = c(8, 16)) +
+  geom_text(aes(label = round(grp_mean, digits = 2), color = "white")) +
+  labs(title = "Duration of Bike Heatmap", x = "Season", y ="Time of Day", fill = "Mean Duration(mins)")
+
+#hp1 + hp2
+```
+
+These two heatmaps compare the travel time between taxi and bike. We can see that the travel time for bike are overall greater than the travel time for taxi for all day and all seasons. The travel times are the greatest during rush hour from 4pm to 7pm for both taxi and bike. Across four seasons, the travel time is the greatest in winter for taxi and the travel time is the greatest in spring for bike. 
+
+```{r}
+# taxi heatmap for velocity
+#hp3 =
+  taxi_df_sample %>%
+  group_by(season, time_of_day) %>%
+  mutate(grp_mean = mean(velocity)) %>%
+  select(season, time_of_day, grp_mean) %>%
+  ggplot(aes(season, time_of_day)) +
+  geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
+  scale_fill_gradient(low = "red", high = "white", limits = c(10, 27)) +
+  geom_text(aes(label = round(grp_mean, digits = 2))) +
+  labs(title = "Velocity of Taxi Heatmap", x = "Season", y ="Time of Day", fill = "Mean Velocity(km/h)")
+```
+
+```{r}
+# bike heatmap for velocity
+#hp4 =
+  bike_df_sample %>%
+  group_by(season, time_of_day) %>%
+  mutate(grp_mean = mean(velocity)) %>%
+  select(season, time_of_day, grp_mean) %>%
+  ggplot(aes(season, time_of_day)) +
+  geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
+  scale_fill_gradient(low = "red", high = "white", limits = c(10, 27)) +
+  geom_text(aes(label = round(grp_mean, digits = 2))) +
+  labs(title = "Velocity of Bike Heatmap", x = "Season", y ="Time of Day", fill = "Mean Velocity(km/h)")
+
+#hp3 + hp4
+```
+
+```{r}
+# combine taxi bike, subway datasets to make boxplot
+comb_df = bind_rows(taxi_df_sample, bike_df_sample, subway_df_sample)
+```
+
+```{r}
+comb_df %>%
+  ggplot(aes(x = type, y = duration, fill = day_type)) +
+  geom_boxplot() +
+  labs(title = "Duration Boxplot", x = "Transportation Type", y = "Duration (mins)")
+```
+
+This duration boxplot compares the travel time on weekdays and weekends for each type of transportation. From this plot we can see that the travel time is greater on weekend for bike. The travel time seems to be similar for subway on both weekdays and weekend. The travel time for taxi is longer on weekdays. 
+
+```{r}
+comb_df %>%
+  ggplot(aes(x = type, y = velocity, fill = day_type)) +
+  geom_boxplot() +
+  labs(title = "Velocity Boxplot", x = "Transportation Type", y = "Velocity (km/h)")
+```
+
+This velocity boxplot compares the travel velocity on weekdays and weekends for each type of transportation. From this plot we can see that the velocities for subway on both weekdays and weekend are the greatest and they are similar across the week. Taxi travels faster on the weekend and bike travels faster on weekdays.  
+
