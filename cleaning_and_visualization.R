@@ -12,7 +12,7 @@ setDTthreads(threads = 12)# customize your threads
 set.seed(1)
 
 # green taxi --------------------
-gtaxi_test_dt = fread("raw_data/data/green_taxi/2020_1.csv")
+gtaxi_test_dt = fread("raw_data/data/green_taxi/2020_5.csv")
 zone_dt = fread("taxi+_zone_lookup (2).csv")
 location_list = zone_dt[Borough == "Manhattan"][,list(LocationID,Zone)]
 PUloation_list = location_list[,.(LocationID,PUZone = Zone)]
@@ -42,7 +42,7 @@ gtaxi_df =
          pickup_datetime = lpep_pickup_datetime)
 
 # yellow taxi --------------------
-ytaxi_test_dt = fread("raw_data/data/yellow_taxi/2020_1.csv")
+ytaxi_test_dt = fread("raw_data/data/yellow_taxi/2020_5.csv")
 ytest_dt_zone = merge.data.table(ytaxi_test_dt, PUloation_list, by.y = "LocationID", by.x = "PULocationID")
 ytest_dt_zone = merge.data.table(ytest_dt_zone, DOloation_list, by.y = "LocationID", by.x = "DOLocationID")
 

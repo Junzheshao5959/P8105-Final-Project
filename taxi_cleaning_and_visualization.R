@@ -7,13 +7,13 @@ library(lubridate)
 setDTthreads(threads = 12)# customize your threads
 
 # graph setting
-options(
-  ggplot2.continuous.colour = "viridis",
-  ggplot2.continuous.fill = "viridis"
-)
-
-scale_colour_discrete = scale_colour_viridis_d
-scale_fill_discrete = scale_fill_viridis_d
+# options(
+#   ggplot2.continuous.colour = "viridis",
+#   ggplot2.continuous.fill = "viridis"
+# )
+#
+# scale_colour_discrete = scale_colour_viridis_d
+# scale_fill_discrete = scale_fill_viridis_d
 
 theme_set(theme_bw() + theme(legend.position = "bottom"))
 
@@ -87,7 +87,7 @@ taxi_df =
   mutate(duration = as.numeric(round(difftime(dropoff_datetime, pickup_datetime, units = "mins"), digits = 2)),
          DOLocationID = factor(DOLocationID),
          PULocationID = factor(PULocationID),
-         loc_pair = str_c(DOLocationID,"-", PULocationID),
+         loc_pair = str_c(DOZone,"-", PUZone),
          month = month(pickup_datetime),
          day_type = case_when(
            wday(pickup_datetime, label = TRUE, abbr = FALSE) %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday") ~ "weekday",
@@ -117,10 +117,11 @@ taxi_df =
 
 skimr::skim(taxi_df)
 
-taxi_df %>%
-  select(loc_pair) %>%
-  n_distinct()
+taxi_df = sample_n(taxi_df, round(nrow(bike_df)/10))
 
+taxi_df %>%
+  group_by(season) %>%
+  summarize(n = n())
 
 taxi_df %>%
   ggplot(aes(trip_distance)) +
@@ -145,6 +146,11 @@ taxi_df %>%
 taxi_df %>%
   group_by(day_type) %>%
   summarize(mean = mean(duration)) %>%
+  knitr::kable(digits = 2)
+
+taxi_df %>%
+  group_by(day_type) %>%
+  summarize(mean = mean(day_type) %>%
   knitr::kable(digits = 2)
 
 #
@@ -179,8 +185,10 @@ taxi_df %>%
   mutate(grp_mean = mean(duration)) %>%
   select(season, time_of_day, grp_mean) %>%
   ggplot(aes(season, time_of_day)) +
-  geom_tile(aes(fill = grp_mean)) +
-  scale_fill_gradient(low = "green", high = "black")
+  geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
+  scale_fill_gradient(low = "lightblue", high = "black") +
+  geom_text(aes(label = round(grp_mean, digits = 2), color = "white")) +
+  labs(title = "Duration of Taxi Heatmap", x = "Season", y ="Time of Day", fill = "Mean Duration")
 
 # look at velocity
 
@@ -218,11 +226,15 @@ taxi_df %>%
   mutate(grp_mean = mean(velocity)) %>%
   select(season, time_of_day, grp_mean) %>%
   ggplot(aes(season, time_of_day)) +
-  geom_tile(aes(fill = grp_mean)) +
-  scale_fill_gradient(low = "green", high = "black")
+  geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
+  scale_fill_gradient(low = "red", high = "white") +
+  geom_text(aes(label = round(grp_mean, digits = 2))) +
+  labs(title = "Velocity of Taxi Heatmap", x = "Season", y ="Time of Day", fill = "Mean Velocity")
+
 
 # subway data --------------------
-subway_df = read_csv("./raw_data/data/subway_schedule_clean.csv")
+subway = read_csv("./raw_data/data/subway_schedule_clean.csv")
+
 
 ## bike data -----------------------
 df = read_csv("./raw_data/test_dt_V1.csv")
@@ -234,6 +246,7 @@ bike_df =
   rename(pickup_datetime = tpep_pickup_datetime,
          dropoff_datetime = tpep_dropoff_datetime) %>%
   mutate(duration = as.numeric(round(difftime(dropoff_datetime, pickup_datetime, units = "mins"), digits = 2)),
+         trip_distance = trip_distance *0.000621371,
          DOLocationID = factor(DOLocationID),
          PULocationID = factor(PULocationID),
          month = month(pickup_datetime),
@@ -258,9 +271,16 @@ bike_df =
          time_of_day = factor(time_of_day, levels = c("early_morning", "rush_hour_am", "midday", "rush_hour_pm", "evening"))) %>%
   filter(
     trip_distance > 0 & trip_distance < quantile(trip_distance, 0.99),
-    duration > 0 & duration < quantile(duration, 0.99)) %>%
+    duration > 0 & duration < quantile(duration, 0.97)) %>%
   mutate(velocity = round(trip_distance/duration, digits = 2)) %>%
-  filter(velocity > 0 & velocity < quantile(velocity, 0.95))
+  filter(velocity > 0 & velocity < quantile(velocity, 0.99))
+
+bike_df = sample_n(bike_df, round(nrow(bike_df)/100))
+
+
+bike_df %>%
+  group_by(season) %>%
+  summarize(n = n())
 
 
 # bike visualization for duration by time of day and seasons
@@ -281,17 +301,13 @@ bike_df %>%
   knitr::kable(digits = 2)
 
 bike_df %>%
-  ggplot(aes(x = duration)) +
-  geom_histogram()
-
-bike_df %>%
   group_by(season) %>%
   mutate(grp_mean = mean(duration)) %>%
   ggplot(aes(x = duration)) +
   geom_histogram(aes(y = ..density..), binwidth = 1, color="black", fill="lightblue") +
   geom_vline(aes(xintercept = grp_mean), color = "blue", linetype = "dashed", size = 0.5) +
   facet_grid(season ~.) +
-  labs(title = "Duration of Car Histogram By Seasons", x = "Duration", y ="Density")
+  labs(title = "Duration of Bike Histogram By Seasons", x = "Duration", y ="Density")
 
 bike_df %>%
   group_by(season, time_of_day) %>%
@@ -300,20 +316,32 @@ bike_df %>%
   geom_histogram(aes(y = ..density..), binwidth = 1,color="black", fill = "lightblue") +
   geom_vline(aes(xintercept = grp_mean), color = "blue", linetype = "dashed", size = 0.5) +
   facet_grid(time_of_day ~ season) +
-  labs(title = "Duration of Car Histogram By Time of the Day", x = "Duration", y = "Count")
+  labs(title = "Duration of BIke Histogram By Time of the Day", x = "Duration", y = "Density")
 
 
 bike_df %>%
   ggplot(aes(x = time_of_day, y = duration)) +
   geom_boxplot(aes(fill = time_of_day)) +
   facet_grid(season ~ .) +
-  labs(title = "Duration of Car Boxplot", x = "Time of the day", y ="Duration")
+  labs(title = "Duration of Bike Boxplot", x = "Time of the day", y ="Duration")
 
-# use heatmap for
+# use heatmap for Duration for bike
 bike_df %>%
   group_by(season, time_of_day) %>%
   mutate(grp_mean = mean(duration)) %>%
   select(season, time_of_day, grp_mean) %>%
   ggplot(aes(season, time_of_day)) +
-  geom_tile(aes(fill = grp_mean)) +
-  scale_fill_gradient(low = "green", high = "black")
+  geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
+  scale_fill_gradient(low = "lightblue", high = "black") +
+  geom_text(aes(label = round(grp_mean, digits = 2), color = "white")) +
+  labs(title = "Duration of Bike Heatmap", x = "Season", y ="Time of Day", fill = "Mean Duration")
+
+bike_df %>%
+  group_by(season, time_of_day) %>%
+  mutate(grp_mean = mean(velocity)) %>%
+  select(season, time_of_day, grp_mean) %>%
+  ggplot(aes(season, time_of_day)) +
+  geom_tile(aes(fill = grp_mean), color = "white", lwd = 0.8, linetype = 1) +
+  scale_fill_gradient(low = "red", high = "white") +
+  geom_text(aes(label = round(grp_mean, digits = 2))) +
+  labs(title = "Velocity of Bike Heatmap", x = "Season", y ="Time of Day", fill = "Mean Velocity")
