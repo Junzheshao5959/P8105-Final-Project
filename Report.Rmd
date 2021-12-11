@@ -1,0 +1,14 @@
+---
+title: "Report"
+output: html_document
+---
+### Questions  
+While we look into the dataset and explore the relation between all numbers, we hope to learn more about the characteristics through answering the following questions:  
+- What might be the fastest transportation to choose within Manhattan?
+- What is the most popular transportation people choose within a day?
+- How would velocities of transports change according to time and taxi zone differences?
+- Is it worth commuting daily driving a car compared to using public transit regardless of the money?
+- What is the distribution of public transit speed rates and how do they vary across the whole year? And what is the pattern of change during a day, a week, a season, or even the weather? sjz
+- What is the geometric difference in choice making and distribution in various taxi zones?
+ 
+While we were manipulating and having deeper exploration, more useful insights, questions and conclusions came up. During this process, we organized and optimized the raw data, and transformed them into more readable explanations after appropriate processing. Meanwhile, we tried to discover and explain more based on existing data, find out the possible factors that might influence the speed, and combine them with the statistics analysis and map searching. 

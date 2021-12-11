@@ -1,12 +1,9 @@
----
-title: "Weather with Transportation"
-output: github_document
-  # html_document:
-  #   code_folding: hide
----
+Weather with Transportation
+================
+
 ## Visualization
 
-```{r library, message=FALSE}
+``` r
 library(knitr)
 library(tidyverse)
 library(dplyr)
@@ -31,7 +28,7 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
 
-```{r input data and clean, message=FALSE}
+``` r
 # Read velocity dataset.   
 test_df <- read_csv("./data/test_dt_V1.csv")
 # Select data with time range
@@ -55,7 +52,7 @@ weather_transport_df <-
   mutate(type = as.factor(type))
 ```
 
-```{r transportation trends among months, message=FALSE}
+``` r
 # popular of transportation vs month
 weather_transport_df %>% 
   mutate(month = as.factor(month)) %>% 
@@ -71,10 +68,22 @@ weather_transport_df %>%
     theme(plot.title = element_text(hjust = 0.5))
 ```
 
-The trends for people choose to travel outside are generally similar no matter using bikes or cabs. But it exists a more significant drop for choosing taxi during the June and less people ride bikes during Dec and Feb. After analyzing the possible casuals, June is the month for students within NYU start their Summer Vacations. So the traffic pressure has a visualized decrease with more people still live in NYU. And for people, especially students, who still live in NYU, they do not have the need to commute in a hurry. Also, with the temperature getting colder and colder, people will prefer more stay at home comparing to traveling and less possibility for them to riding bikes outside. The temperature of the weather could be a confounder to transport choice and month model, but not for special month June. 
+<img src="weather_taxi_bike_files/figure-gfm/transportation trends among months-1.png" width="90%" />
 
+The trends for people choose to travel outside are generally similar no
+matter using bikes or cabs. But it exists a more significant drop for
+choosing taxi during the June and less people ride bikes during Dec and
+Feb. After analyzing the possible casuals, June is the month for
+students within NYU start their Summer Vacations. So the traffic
+pressure has a visualized decrease with more people still live in NYU.
+And for people, especially students, who still live in NYU, they do not
+have the need to commute in a hurry. Also, with the temperature getting
+colder and colder, people will prefer more stay at home comparing to
+traveling and less possibility for them to riding bikes outside. The
+temperature of the weather could be a confounder to transport choice and
+month model, but not for special month June.
 
-```{r wind speed(mm) vs velocity, message=FALSE}
+``` r
 # wind speed (mm) vs velocity
 weather_transport_df %>% 
   group_by(type, awnd) %>% 
@@ -87,10 +96,20 @@ weather_transport_df %>%
           y = "Mean Velocity (m/s)") +
     theme(plot.title = element_text(hjust = 0.5))
 ```
-  
-It's interesting to find out the truth that following by the increasing of wind speed, a linear regression model could be explored between the velocity of bike riders and wind speed and velocity of bikes is increasing as well. While at the same time, wind speed does no influence to taxi drivers.  
 
-```{r precipitation with velocity and total number of specific transport, message=FALSE}
+    ## Warning: Removed 2 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 2 rows containing missing values (geom_point).
+
+<img src="weather_taxi_bike_files/figure-gfm/wind speed(mm) vs velocity-1.png" width="90%" />
+
+It’s interesting to find out the truth that following by the increasing
+of wind speed, a linear regression model could be explored between the
+velocity of bike riders and wind speed and velocity of bikes is
+increasing as well. While at the same time, wind speed does no influence
+to taxi drivers.
+
+``` r
 # Precipitation(mm) vs velocity
 prcp_vel <-
   weather_transport_df %>% 
@@ -119,9 +138,24 @@ prcp_trans <-
 prcp_vel + prcp_trans
 ```
 
-Velocity could be regarded as one parameter to judge the flow of a transportation. Obviously from the plots showing the connection between the velocity and the mode of transport, the velocity of taxi are faster to bike on average. And the light to moderate rain (<30 mm), precipitation seems have no impact to the velocity, especially while taking a look at bike data. That might because though raining will make road more slippery, it also has washing effect to environment and other effects. The combination of all effects make velocity nearly stay the same. Moreover, the more amount of rain is, the slower the traffic it would be, the less people would choose to travel and it is more likely to choose taxi while weather condition getting even worse compared to riding. That might because a heavy rain might possibly affect drivers and riders visibility, thus decreases the vehicle speed and affects travel choice. 
+<img src="weather_taxi_bike_files/figure-gfm/precipitation with velocity and total number of specific transport-1.png" width="90%" />
 
-```{r show high T connection, message=FALSE}
+Velocity could be regarded as one parameter to judge the flow of a
+transportation. Obviously from the plots showing the connection between
+the velocity and the mode of transport, the velocity of taxi are faster
+to bike on average. And the light to moderate rain (&lt;30 mm),
+precipitation seems have no impact to the velocity, especially while
+taking a look at bike data. That might because though raining will make
+road more slippery, it also has washing effect to environment and other
+effects. The combination of all effects make velocity nearly stay the
+same. Moreover, the more amount of rain is, the slower the traffic it
+would be, the less people would choose to travel and it is more likely
+to choose taxi while weather condition getting even worse compared to
+riding. That might because a heavy rain might possibly affect drivers
+and riders visibility, thus decreases the vehicle speed and affects
+travel choice.
+
+``` r
 # High Temperature vs transportation choice. 
 ht_trans <- 
   weather_transport_df %>% 
@@ -151,7 +185,9 @@ ht_vel <-
 ht_trans + ht_vel
 ```
 
-```{r low temperature connection, message=FALSE}
+<img src="weather_taxi_bike_files/figure-gfm/show high T connection-1.png" width="90%" />
+
+``` r
 # Low Temperature vs transportation choice. 
 lt_trans <- 
   weather_transport_df %>% 
@@ -182,5 +218,18 @@ lt_vel <-
 lt_trans + lt_vel
 ```
 
-The distribution and trends of travel choice among taxi and bikes are distint different. People tend to choose taxi travel plan while in relatively low temperature and will change to bike preference when there is significant increase in temperature. People have more possibility to stay home when meet with extreme high temperature. It could be concluded that people are more willing to travel outside under the moderate temperature, the higher, lower or even extreme temperature the weather is, the less potential likelihood that people will go outside and use the transport. It also comes an interesting phenomenon that taxi tends to run faster and bike runs slower with the temperature increase. The faster of the taxi could because of the decrease of the traffic pressure and the better road condition. At the same time, snow effect makes riders drive quicker for getting avoid of staying outside and keep warm. 
+<img src="weather_taxi_bike_files/figure-gfm/low temperature connection-1.png" width="90%" />
 
+The distribution and trends of travel choice among taxi and bikes are
+distint different. People tend to choose taxi travel plan while in
+relatively low temperature and will change to bike preference when there
+is significant increase in temperature. People have more possibility to
+stay home when meet with extreme high temperature. It could be concluded
+that people are more willing to travel outside under the moderate
+temperature, the higher, lower or even extreme temperature the weather
+is, the less potential likelihood that people will go outside and use
+the transport. It also comes an interesting phenomenon that taxi tends
+to run faster and bike runs slower with the temperature increase. The
+faster of the taxi could because of the decrease of the traffic pressure
+and the better road condition. At the same time, snow effect makes
+riders drive quicker for getting avoid of staying outside and keep warm.
