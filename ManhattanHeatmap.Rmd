@@ -25,12 +25,10 @@ library(shinyalert)
 setDTthreads(threads = 16)
 ```
 
-
-
 ```{r get manhattan geojson}
 #get manhattan geojson
 manhattan <- rgdal::readOGR("data/nyc_taxi_zone.geojson")
-test_dt <- fread("data/test_dt_V1.csv")
+test_dt <- fread("data/test_dt_year.csv")
 test_dt <- test_dt %>%
   mutate(
     hour = unclass(as.POSIXlt(tpep_pickup_datetime))$hour
@@ -150,7 +148,7 @@ server <- function(input, output, session) {
     
     time_range <- c()
     for (i in time_choose) {
-      time_range <- c(time_start_dictionary[i]:time_end_dictionary[i] - 1,time_range)
+      time_range <- c(time_start_dictionary[i]:(time_end_dictionary[i] - 1),time_range)
     }
     
     print(type)

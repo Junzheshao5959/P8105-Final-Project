@@ -23,9 +23,10 @@ manhattan_map_data <- manhattan[manhattan$borough == "Manhattan",]
 manhattan_map_data$id <- 1:69
 
 zone_list <- manhattan_map_data$zone
-test_dt <- fread("data/test_dt_V1.csv")
+test_dt <- fread("data/test_dt_year.csv")
+test_mta_dt <- fread("data/test_dt_mta.csv")
+test_dt <- bind_rows(test_dt,test_mta_dt)
 test_dt <- test_dt[,hour := unclass(as.POSIXlt(tpep_pickup_datetime))$hour]
-head(test_dt)
 
 #calculate mean speed of each zone
 calculate_mean_speed <- function(PU,Type,month_choose,day_choose,time_range) {
@@ -35,19 +36,24 @@ calculate_mean_speed <- function(PU,Type,month_choose,day_choose,time_range) {
   progress$set(message = "Calculating Velocity", value = 0)
 
   for (zone in zone_list) {
-    mean_speed <- test_dt[PUZone == PU][DOZone == zone][type == Type][month %in% month_choose][week %in% day_choose][hour %in% time_range]
+    if (Type == "MTA") {
+      mean_speed <- test_dt[PUZone == PU][DOZone == zone][type == Type][week %in% day_choose][hour %in% time_range]
+    }
+    else {
+      mean_speed <- test_dt[PUZone == PU][DOZone == zone][type == Type][month %in% month_choose][week %in% day_choose][hour %in% time_range]
+    }
     print(mean_speed)
     progress$inc(1/69, detail = zone)
-    mean_speed_list <- c(mean_speed_list, mean(mean_speed[,velocity],na.rm = TRUE))
+    mean_speed_list <- c(mean_speed_list, mean(mean_speed[,velocity],na.rm = TRUE)*3.6)
   }
   return(replace(mean_speed_list,is.nan(mean_speed_list),NA))
 }
 
 month <- c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-time <- c("AM","Midday","PM","Evening","Night")
-time_start_dictionary <- c("AM" = 7, "Midday" = 10, "PM" = 16, "Evening" = 19, "Night" = 0)
-time_end_dictionary <- c("AM" = 10, "Midday" = 16, "PM" = 19, "Evening" = 24, "Night" = 7)
+time <- c("Rush Hour AM","Midday","Rush Hour PM","Evening","Early Morning")
+time_start_dictionary <- c("Rush Hour AM" = 7, "Midday" = 10, "Rush Hour PM" = 16, "Evening" = 19, "Early Morning" = 0)
+time_end_dictionary <- c("Rush Hour AM" = 10, "Midday" = 16, "Rush Hour PM" = 19, "Evening" = 24, "Early Morning" = 7)
 
 #design
 ui <- dashboardPage(
@@ -58,13 +64,13 @@ ui <- dashboardPage(
   dashboardBody(
     fluidRow(
       useShinyalert(),
-      column(width = 9,
+      column(width = 8,
              box(width = NULL, solidHeader = TRUE,
                  leafletOutput("manhattan_map", height = "85vh")
              )
       ),
-      column(width = 3,
-             radioButtons("type", "Vehicle Type",c("Bike" = "bike","Taxi" = "taxi"), inline = TRUE),
+      column(width = 4,
+             radioButtons("type", "Vehicle Type",c("Bike" = "bike","Taxi" = "taxi","Subway" = "MTA"), inline = TRUE),
              sliderTextInput("month", "Month",choices = month, selected = month[c(1:12)],grid = TRUE),
              sliderTextInput("day","Day",choices = day, selected = day[c(1:7)],grid = TRUE),
              checkboxGroupInput("time","Time",choices = time, selected = time, inline = TRUE),
@@ -130,7 +136,7 @@ server <- function(input, output, session) {
     day_choose <- replace(day_choose,day_choose == 7,0)
 
     for (i in time_choose) {
-      time_range <- c(time_start_dictionary[[i]]:time_end_dictionary[[i]] - 1,time_range)
+      time_range <- c(time_start_dictionary[[i]]:(time_end_dictionary[[i]] - 1),time_range)
     }
 
     print(type)
@@ -165,9 +171,9 @@ server <- function(input, output, session) {
     leafletProxy("manhattan_map") %>%
       addPolygons(data = manhattan_map_data, color = "white", fillOpacity = 2,
                   fillColor = ~color_pal(map_data$speed), group = "manhattan_heat",
-                  label = paste(manhattan_map_data$zone, round(map_data$speed,2), "m/s", sep = "\n"),layerId = manhattan_map_data$id) %>%
-      addLegend(position = "bottomright", pal = color_pal, values = map_data$speed, title = "Speed", opacity = 2, layerId = "speed") %>%
-      addPolygons(data = map_data$choice, color = "#00FF00", layerId = "choice", label = paste(pu_zone$zone, round(pu_zone$speed,2), "m/s", sep = "\n"))
+                  label = paste(manhattan_map_data$zone, round(map_data$speed,2), "km/h", sep = "\n"),layerId = manhattan_map_data$id) %>%
+      addLegend(position = "bottomright", pal = color_pal, values = map_data$speed, title = "Speed (km/h)", opacity = 2, layerId = "speed") %>%
+      addPolygons(data = map_data$choice, color = "#00FF00", layerId = "choice", label = paste(pu_zone$zone, round(pu_zone$speed,2), "km/h", sep = "\n"))
   }
   )
 
