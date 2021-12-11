@@ -32,9 +32,10 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
 
-```{r input data}
+```{r input data and clean}
 # Read velocity dataset.   
 test_df <- read_csv("./data/test_dt_V1.csv")
+# Select data with time range
 test_df <- setDT(test_df)
 test_df <- test_df[, date := format(as.Date(tpep_pickup_datetime),"%Y-%m-%d")]
 test_df <- test_df[date >= "2020-06"][date < "2021-06"]
@@ -47,12 +48,15 @@ test_df <-
   test_df %>% 
   mutate(date = format(tpep_pickup_datetime, format = '%Y-%m-%d')) %>% 
   mutate(date = as.Date(date))
+
 # Join table
 weather_transport_df <-
   left_join(test_df, weather_df, by = "date") %>%
   dplyr::select(trip_distance, type, month, velocity, date, awnd, prcp, snwd, tmax, tmin, tsun) %>% 
   mutate(type = as.factor(type))
+```
 
+```{r precipitation with velocity and total number of specific transport}
 # Drawing plot
 # Precipitation(mm) vs velocity
 weather_transport_df_sp <-
@@ -60,8 +64,10 @@ weather_transport_df_sp <-
   drop_na(prcp, velocity) %>% 
   group_by(type, prcp) %>% 
   summarize(v_mean = mean(velocity))
+
 # Draw plot with velocity and precipitation. 
-ggplot(weather_transport_df_sp, aes(x = prcp, y = v_mean, group = type, colour = type)) + 
+prcp_vel <- 
+  ggplot(weather_transport_df_sp, aes(x = prcp, y = v_mean, group = type, colour = type)) + 
   geom_point(aes(colour = type)) +
   geom_smooth(method = lm) +
   labs(title = "Velocity vs Precipitation",
@@ -77,14 +83,20 @@ weather_transport_df_pt <-
   group_by(type, prcp) %>% 
   summarize(n_mean = mean(n_obs))
 # Draw plot: precipitation vs transportation choice. 
-ggplot(weather_transport_df_pt, aes(x = prcp, y = n_mean/sum(n_mean), group = type, colour = type)) + 
+prcp_trans <-
+  ggplot(weather_transport_df_pt, aes(x = prcp, y = n_mean/sum(n_mean), group = type, colour = type)) + 
   geom_point(aes(color = type)) +
   geom_smooth(method = lm) +
   labs(title = "Transport Choice vs Precipitation", 
          x = "Precipitation/10 (mm)", 
          y = "Choice Possibility") +
   theme(plot.title = element_text(hjust = 0.5))
+prcp_vel + prcp_trans
+```
 
+Velocity could be regarded as one parameter to judge the flow of a transportation. Obviously from the plots showing the connection between the velocity and the mode of transport, the velocity of taxi are faster to bike on average. And the light to moderate rain (<30 mm), precipitation seems have no impact to the velocity, especially while taking a look at bike data. That might because though raining will make road more slippery, it also has washing effect to environment and other effects. The combination of all effects make velocity nearly stay the same. Moreover, the more amount of rain is, the slower the traffic it would be, the less people would choose to travel and it is more likely to choose taxi while weather condition getting even worse compared to riding. That might because a heavy rain might possibly affect drivers and riders visibility, thus decreases the vehicle speed and affects travel choice. 
+
+```{r transportation trends among months}
 # popular of transportation vs month
 weather_transport_df_tm <-
   weather_transport_df %>% 
@@ -100,7 +112,11 @@ ggplot(weather_transport_df_tm, aes(x = month, y = n_obs, group = type, fill = t
          x = "Month", 
          y = "Trends of Transportation") +
   theme(plot.title = element_text(hjust = 0.5))
+```
 
+The trends for people choose to travel outside are generally similar no matter using bikes or cabs. But it exists a more significant drop for choosing taxi during the June and less people ride bikes during Dec and Feb. After analyzing the possible casuals, June is the month for students within NYU start their Summer Vacations. So the traffic pressure has a visualized decrease with more people still live in NYU. And for people, especially students, who still live in NYU, they do not have the need to commute in a hurry. Also, with the temperature getting colder and colder, people will prefer more stay at home comparing to traveling and less possibility for them to riding bikes outside. The temperature of the weather could be a confounder to transport choice and month model, but not for special month June. 
+
+```{r show high T connection}
 # High Temperature vs transportation choice. 
 weather_transport_df_htn <-
   weather_transport_df %>% 
@@ -133,7 +149,9 @@ ht_vel <- ggplot(weather_transport_df_htv, aes(x = tmax, y = v_avg, group = type
   scale_y_continuous(limits = c(1, 7.5))
 
 ht_trans + ht_vel
+```
 
+```{r low temperature connection}
 # Low Temperature vs transportation choice. 
 weather_transport_df_ltn <-
   weather_transport_df %>% 
@@ -167,6 +185,8 @@ lt_vel <- ggplot(weather_transport_df_ltv, aes(x = tmin, y = v_avg, group = type
 lt_trans + lt_vel
 ```
 
+The connection between transport choice, popularity, velocity and the temperature are showing similar trends, considering both the highest and lowest temperature within a day. It could be concluded that people are more willing to travel outside under the moderate temperature, the higher, lower or even extreme temperature the weather is, the less potential likelihood that people will go outside and use the transport. It also comes an interesting phenomenon that taxi tends to run faster and bike runs slower with the temperature increase. The faster of the taxi could because of the decrease of the traffic pressure and this effect is more obvious compared to snow effect while riders tend to drive slower for getting warmer and slower wind speed. 
+
 ```{r linear regression}
 # lm_velocity <-
 #   weather_transport_df %>% 
@@ -178,6 +198,7 @@ lt_trans + lt_vel
 #   as_tibble() %>% 
 #   lm(velocity ~ trip_distance + month + awnd + prcp + snwd)
 ```
+
 ### Questions  
 While we look into the dataset and explore the relation between all numbers, we hope to learn more about the characteristics through answering the following questions:  
 - What might be the fastest transportation to choose within Manhattan?
@@ -218,6 +239,8 @@ Some major findings are worth pointing out from the velocity heatmap.
 ***Taxi vs Bike***  
 From the heat map, we found that the mean velocity of taking taxi is still faster compared to riding a bike overall. However, riding bikes during rush hour in Manhattan is competitive to take a taxi while only travelling across the nearby boroughs in Midtown. That means cabs will not save you more time when you only cycle between midtown but cost you more based on marketing price, especially for shorter trips. The usage of both bikes and cabs are of more need during daytime and become less after sunset which follow our travel habit. Moreover, people would be more likely to take a taxi to travel across more borough areas compared to riding bikes.   
 ***The Velocity of Borough***  
-As we know the midtown of Manhattan is known for its bustling and busy traffic, the mean velocity in midtown is significantly slower compared to neighborhoods in Uppertown and Downtown. Moreover, the velocity in Uppertown and Randalls Island would be even quicker. And the specific traffic time would be more dependent on where you are coming from and where you are going to.   
+As we know the midtown of Manhattan is known for its bustling and busy traffic, the mean velocity in midtown is significantly slower compared to neighborhoods in Uppertown and Downtown. Moreover, the velocity in Uppertown and Randalls Island would be even quicker. We notice that the traffic on Randalls Island usually performs better, and this might because of the lower population density. We also known from the web that this is a parkland island and there is no residential housing for the general public except for some public facilities. And the specific traffic time would be more dependent on where you are coming from and where you are going to.
+
+there is no residential housing for the general public on the island.
 What is worth emphasizing here is that the more boroughs that you cross, the faster velocity that we might obtain no matter where our pick up location is and what our transport is. We guess it might be because of the longer travel distance we have, the drivers or riders would more likely to choose the high way, the road with low traffic and avoid traffic lights.   
 
