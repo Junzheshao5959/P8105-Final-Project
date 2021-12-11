@@ -2,7 +2,9 @@
 title: "weather_taxi_bike"
 author: "FC"
 date: "12/10/2021"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 
 ---
 ## Visualization
@@ -54,6 +56,24 @@ weather_transport_df <-
   left_join(test_df, weather_df, by = "date") %>%
   dplyr::select(trip_distance, type, month, velocity, date, awnd, prcp, snwd, tmax, tmin, tsun) %>% 
   mutate(type = as.factor(type))
+```
+
+```{r}
+# wind speed (mm) vs velocity
+weather_transport_df_wv <-
+  weather_transport_df %>% 
+  drop_na(awnd, velocity) %>% 
+  group_by(type, awnd) %>% 
+  summarize(v_mean = mean(velocity))
+
+# Draw plot with velocity and precipitation. 
+  ggplot(weather_transport_df_wv, aes(x = awnd, y = v_mean, group = type, colour = type)) + 
+  geom_point(aes(colour = type)) +
+  geom_smooth(method = lm) +
+  labs(title = "Velocity vs Wind Speed",
+         x = "Wind Speed/10 (m/s)", 
+         y = "Mean Velocity (m/s)") +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r precipitation with velocity and total number of specific transport}
