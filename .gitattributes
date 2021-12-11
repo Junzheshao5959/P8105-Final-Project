@@ -1,2 +1,4 @@
 data/citibike_manhattan_sample.csv filter=lfs diff=lfs merge=lfs -text
 data/bus/bus_schedule_clean.csv filter=lfs diff=lfs merge=lfs -text
+data/test_dt_mta.csv filter=lfs diff=lfs merge=lfs -text
+data/test_dt_year.csv filter=lfs diff=lfs merge=lfs -text
