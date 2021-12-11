@@ -111,7 +111,7 @@ server <- function(input, output, session) {
     drop_off_choose <- input$drop_off
     print(date_choose)
     print(pick_up_choose)
-    print(drop_off_choose)
+    print(drop_off)
   })
   
   #respond to click
