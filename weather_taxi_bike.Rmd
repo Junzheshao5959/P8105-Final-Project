@@ -1,0 +1,198 @@
+---
+title: "weather_taxi_bike"
+author: "FC"
+date: "12/10/2021"
+output: html_document
+
+---
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+```
+
+```{r library}
+library(knitr)
+library(tidyverse)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+```{r input data}
+# Read velocity dataset.   
+test_df <- read_csv("./data/test_dt_V1.csv")
+test_df <- setDT(test_df)
+test_df <- test_df[, date := format(as.Date(tpep_pickup_datetime),"%Y-%m-%d")]
+test_df <- test_df[date >= "2020-06"][date < "2021-06"]
+
+# Read weather dataset. 
+weather_df <- read_csv("./data/manhattan_weather.csv")
+
+# Data clean
+test_df <- 
+  test_df %>% 
+  mutate(date = format(tpep_pickup_datetime, format = '%Y-%m-%d')) %>% 
+  mutate(date = as.Date(date))
+# Join table
+weather_transport_df <-
+  left_join(test_df, weather_df, by = "date") %>%
+  dplyr::select(trip_distance, type, month, velocity, date, awnd, prcp, snwd, tmax, tmin, tsun) %>% 
+  mutate(type = as.factor(type))
+
+# Drawing plot
+#choose a random vector
+set.seed(1)
+sample_rows <- sample(1:nrow(iris), 10)
+# Precipitation(mm) vs velocity
+weather_transport_df_sp <-
+  weather_transport_df %>% 
+  sample_frac(0.0001) %>% 
+  drop_na(prcp, velocity)
+# Draw plot with velocity and precipitation. 
+ggplot(weather_transport_df_sp, aes(x = prcp, y = velocity, group = type, colour = type)) + 
+  geom_point(aes(color = type)) +
+  geom_line() +
+  labs(title = "Velocity vs Precipitation",
+       subtitle = "Sample Scale: 1/1000", 
+         x = "Precipitation/10 (mm)", 
+         y = "Velocity (m/s)") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 1))
+
+# Precipitation(mm) vs transportation choice
+weather_transport_df_pt <-
+  weather_transport_df %>% 
+  sample_frac(0.001) %>% 
+  group_by(type, prcp, date) %>% 
+  summarise(n_obs = n()) %>% 
+  group_by(type, prcp) %>% 
+  summarize(n_mean = mean(n_obs))
+# Draw plot: precipitation vs transportation choice. 
+ggplot(weather_transport_df_pt, aes(x = prcp, y = n_mean/sum(n_mean), group = type, colour = type)) + 
+  geom_point(aes(color = type)) +
+  geom_line() +
+  labs(title = "Transport Choice vs Precipitation", 
+       subtitle = "Sample Scale: 1/100",  
+         x = "Precipitation/10 (mm)", 
+         y = "Choice Possibility") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 1))
+
+# popular of transportation vs month
+weather_transport_df_tm <-
+  weather_transport_df %>% 
+  sample_frac(0.001) %>% 
+  mutate(month = as.factor(month)) %>% 
+  group_by(type, month) %>% 
+  summarise(n_obs = n()) 
+
+# Draw plot: precipitation vs transportation choice. 
+ggplot(weather_transport_df_tm, aes(x = month, y = n_obs, group = type, colour = type)) + 
+  geom_point(aes(color = type)) +
+  geom_line() +
+  labs(title = "Popular of Transportation According to Month", 
+       subtitle = "Sample Scale: 1/1000",   
+         x = "Month", 
+         y = "Trends of Transportation") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 1))
+
+# High Temperature vs transportation choice. 
+weather_transport_df_htn <-
+  weather_transport_df %>% 
+  sample_frac(0.001) %>% 
+  mutate(month = as.factor(month)) %>% 
+  group_by(type, tmax) %>% 
+  summarise(n_obs = n()) 
+ggplot(weather_transport_df_htn, aes(x = tmax, y = n_obs, group = type, colour = type)) + 
+  geom_point(aes(color = type)) +
+  geom_line() +
+  labs(title = "Popular of Transportation According to High Temperature", 
+       subtitle = "Sample Scale: 1/1000",   
+         x = "High Temperature/10 (°C)", 
+         y = "Trends of Transportation") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 1)) +
+  scale_y_continuous(limits = c(0, 150))
+
+# High Temperature vs velocity. 
+weather_transport_df_htv <-
+  weather_transport_df %>% 
+  sample_frac(0.001) %>% 
+  group_by(type, tmax) %>% 
+  summarise(v_avg = mean(velocity)) 
+
+ggplot(weather_transport_df_htv, aes(x = tmax, y = v_avg, group = type, colour = type)) + 
+  geom_point(aes(color = type)) +
+  geom_line() +
+  labs(title = "High Temperature vs Velocity", 
+       subtitle = "Sample Scale: 1/1000",   
+         x = "High Temperature/10 (°C)", 
+         y = "Velocity (m/s)") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 1)) +
+  scale_y_continuous(limits = c(0, 10))
+
+# Low Temperature vs transportation choice. 
+weather_transport_df_ltn <-
+  weather_transport_df %>% 
+  sample_frac(0.001) %>% 
+  group_by(type, tmin) %>% 
+  summarise(n_obs = n()) 
+ggplot(weather_transport_df_ltn, aes(x = tmin, y = n_obs, group = type, colour = type)) + 
+  geom_point(aes(color = type)) +
+  geom_line() +
+  labs(title = "Popular of Transportation According to Low Temperature", 
+       subtitle = "Sample Scale: 1/1000",   
+         x = "Low Temperature/10 (°C)", 
+         y = "Trends of Transportation") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 1)) +
+  scale_y_continuous(limits = c(0, 150))
+
+# Low Temperature vs velocity. 
+weather_transport_df_ltv <-
+  weather_transport_df %>% 
+  sample_frac(0.001) %>% 
+  group_by(type, tmin) %>% 
+  summarise(v_avg = mean(velocity)) 
+
+ggplot(weather_transport_df_ltv, aes(x = tmin, y = v_avg, group = type, colour = type)) + 
+  geom_point(aes(color = type)) +
+  geom_line() +
+  labs(title = "Velocity vs Low Temperature", 
+       subtitle = "Sample Scale: 1/1000",   
+         x = "Low Temperature/10 (°C)", 
+         y = "Velocity (m/s)") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 1)) +
+  scale_y_continuous(limits = c(0, 10))
+```
+```{r linear regression}
+# lm_velocity <-
+#   weather_transport_df %>% 
+#   sample_frac(0.0001) %>% 
+#   filter(type == "bike") %>%
+#   mutate(month = as.factor(month)) %>%
+#   drop_na() %>% 
+#   dplyr::select(-date) %>% 
+#   as_tibble() %>% 
+#   lm(velocity ~ trip_distance + month + awnd + prcp + snwd)
+```
+
