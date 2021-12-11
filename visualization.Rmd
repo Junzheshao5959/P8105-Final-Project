@@ -26,22 +26,64 @@ knitr::opts_chunk$set(
 ## Visualization 
 
 ```{r, message = FALSE}
+# read in data for visualization
+taxi_df = read_csv("./data_vis/taxi_vis.csv")
+bike_df = read_csv("./data_vis/bike_vis.csv")
+
 # read in sample data
 taxi_df_sample = 
-  read_csv("./sample_data/taxi_sample.csv") %>% 
+  read_csv("./data_vis/taxi_sample.csv") %>% 
   mutate(time_of_day = factor(time_of_day, levels = c("early_morning", "rush_hour_am", "midday", "rush_hour_pm", "evening")),
          season = factor(season, levels = c("spring", "summer", "fall", "winter")))
 
 bike_df_sample = 
-  read_csv("./sample_data/bike_sample.csv") %>% 
+  read_csv("./data_vis/bike_sample.csv") %>% 
   mutate(time_of_day = factor(time_of_day, levels = c("early_morning", "rush_hour_am", "midday", "rush_hour_pm", "evening")),
          season = factor(season, levels = c("spring", "summer", "fall", "winter")))
 
 subway_df_sample = 
-  read_csv("./sample_data/subway_sample.csv") %>% 
+  read_csv("./data_vis/subway_sample.csv") %>% 
   mutate(time_of_day = factor(time_of_day, levels = c("early_morning", "rush_hour_am", "midday", "rush_hour_pm", "evening")),
          season = factor(season, levels = c("spring", "summer", "fall", "winter")))
 ```
+
+## Most Frequent Origin - Destination Pairs
+
+Looking at the most frequent origin-destination pairs in our dataset, we can see which areas in Manhattan people prefer getting around by taxi and which area in Manhattan people prefer getting around by bike. 
+
+### Taxi
+```{r, message=FALSE}
+taxi_df %>% 
+  mutate(loc_pair = fct_infreq(loc_pair)) %>% 
+  group_by(loc_pair) %>% 
+  summarize(total = n()) %>% 
+  arrange(desc(total)) %>% 
+  top_n(15) %>% 
+  ggplot(aes(x = loc_pair, y = total)) +
+  geom_bar(stat = "identity" , fill = "lightblue")+
+  theme(axis.text.x = element_text(angle = 70, vjust = 1, hjust=1)) +
+  geom_text(aes(label=total), vjust=1.6, color="black", size=3.5) +
+  labs(title = "Most Frequent Origin-Destination Pairs For Taxi", x = "Origin - Destination Pairs", y = "Number")
+```
+
+From this barplot we can see that the most frequent origin-destination pairs are located in the upper east side and in the upper west side. 
+
+## Bike
+```{r, message = FALSE}
+bike_df %>% 
+  mutate(loc_pair = fct_infreq(loc_pair)) %>% 
+  group_by(loc_pair) %>% 
+  summarize(total = n()) %>% 
+  arrange(desc(total)) %>% 
+  top_n(15) %>% 
+  ggplot(aes(x = loc_pair, y = total)) +
+  geom_bar(stat = "identity" , fill = "lightblue")+
+  theme(axis.text.x = element_text(angle = 70, vjust = 1, hjust=1)) +
+  geom_text(aes(label=total), vjust=1.6, color="black", size=3.5) +
+  labs(title = "Most Frequent Origin-Destination Pairs For Bike", x = "Origin - Destination Pairs", y = "Number")
+```
+
+From this barplot we can see that the most frequent origin-destination pairs for bike are located in East Village, East Chelsea and Central Park. 
 
 To get a general understanding of the travel time and the travel velocity of each type of transportation, we made heatmaps and boxplots to show travel time and velocity during different time periods of the day and across seasons.
 
