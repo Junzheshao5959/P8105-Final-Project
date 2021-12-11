@@ -17,7 +17,7 @@ Welcome to our project, and let us present to you our findings on the fastest wa
 *video
 
 ## __Motivation__ 
-The initial idea of the project arose when we decided to give ourselves a little break after struggling for so long on deciding what project to do. We started chitchatting, and through our conversation, we realized that we all commute to school via different transportation. We have one person driving, one taking the subway, one riding citibike and two taking the bus. As we were complaining about the transportation system and bad traffic in the city, we all agreed on doing a project that could help people choose the most time-saving and cost-effective transportation in Manhattan. 
+The initial idea of the project arose when we decided to give ourselves a little break after struggling for so long on deciding what project to do. We started chitchatting, and through our conversation, we realized that we all commute to school via different transportation. We have one person driving, one taking the subway, one riding citibike and two taking the bus. As we were complaining about the transportation system and bad traffic in the city, we all agreed on doing a project that could help people choose the most time-saving and cost-effective transportation in Manhattan. Inspired by the paper _Hail a cab or ride a bike? A travel time comparison of taxi and bicycle-sharing systems in New York City_, we are interested in whether bicycles can compete with other transportation in terms of travel time in Manhattan in 2020 to 2021 specifically. 
 
 ## __Data__
 __Data Sources:__  
