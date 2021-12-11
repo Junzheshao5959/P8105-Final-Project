@@ -7,7 +7,6 @@ output:
 ## Title
 
 
-
 ![](nyc.png)
 
 ## __Introduction__
