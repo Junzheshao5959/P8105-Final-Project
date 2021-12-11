@@ -1,0 +1,192 @@
+---
+title: "Welcome"
+output: 
+  html_document:
+    code_folding: hide
+---
+## Title
+
+
+
+![](nyc.png)
+
+## __Introduction__
+Have you ever been stuck in the NYC subway with no signal on? In a car that does not move at all? Have you ever noticed any citibike station when you're wandering on the street? Do you ever wonder which transportation is the best time-saving option in Manhattan? If yes, then you are at the right place!
+
+Welcome to our project, and let us present to you our findings on the fastest way to get around in Manhattan and guide you through our interactive map where you can estimate travel time using each transportation at different time periods of the year/day with just several clicks!
+
+*video
+
+## __Motivation__ 
+The initial idea of the project arose when we decided to give ourselves a little break after struggling for so long on deciding what project to do. We started chitchatting, and through our conversation, we realized that we all commute to school via different transportation. We have one person driving, one taking the subway, one riding citibike and two taking the bus. As we were complaining about the transportation system and bad traffic in the city, we all agreed on doing a project that could help people choose the most time-saving and cost-effective transportation in Manhattan. 
+
+## __Data__
+__Data Sources:__  
+
+* [NYC Taxi Trip Record Data](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page) : We obtained the yellow taxi, green taxi and taxi zone lookup table from this website. The original yellow and green taxi datasets contain files from Jan. 2020 to Jul. 2021 with 33,671,276 and 749,439 observations, respectively. The taxi zone lookup table is shown below. 
+
+<center>
+
+![](zone.png){width=300px}
+
+</center>
+
+
+* [Dataset on Citi Bike Trip Histories](https://ride.citibikenyc.com/system-data) : Citibike dataset was obtained from the citibike website, with files from Jan. 2020 to Oct. 2021 including information on pick up locations and times, drop off locations and time, etc in Manhattan, Brooklyn, Queens and Bronx specificaly. 
+
+* [New York City MTA](https://transitfeeds.com/p/mta) : The NYC subway schedule was obtained from the NYC MTA website, which includes 1000 trains' information on stops, arrival and departure time etc. 
+
+__Data Processing and Cleaning:__  
+The raw data in these three datasets are excessively large, and speed issue arose with the use of the tidyverse package. Thus, we substituted it with the data.table package, which greatly enhanced the code-running process. 
+
+For the taxi datasets, we randomly sampled by 100 and eliminated variables that were not used and added variables for visualization. This resulted in a table of 3,585,113 observation and 15 variables. 
+
+```{r eval = FALSE}
+# green taxi --------------------
+gtaxi_test_dt = fread("raw_data/data/green_taxi/2020_1.csv")
+zone_dt = fread("taxi+_zone_lookup (2).csv")
+location_list = zone_dt[Borough == "Manhattan"][,list(LocationID,Zone)]
+PUloation_list = location_list[,.(LocationID,PUZone = Zone)]
+DOloation_list = location_list[,.(LocationID,DOZone = Zone)]
+gtest_dt_zone = merge.data.table(gtaxi_test_dt, PUloation_list, by.y = "LocationID", by.x = "PULocationID")
+gtest_dt_zone = merge.data.table(gtest_dt_zone, DOloation_list, by.y = "LocationID", by.x = "DOLocationID")
+
+# read, clean, and sample -----------
+gtaxi_res_dt = data.table(matrix(ncol = 0, nrow = 0))
+for (x in list.files("raw_data/data/green_taxi")){
+  gtaxi_dt = fread(paste("raw_data/data/green_taxi/", x, sep =""))
+  gtaxi_dt = merge.data.table(gtaxi_dt, PUloation_list, by.y = "LocationID", by.x = "PULocationID")
+  gtaxi_dt = merge.data.table(gtaxi_dt, DOloation_list, by.y = "LocationID", by.x = "DOLocationID")
+  gtaxi_dt = as.data.table(sample_n(as_tibble(gtaxi_dt),round(nrow(gtaxi_dt)/100)))# random sample 10%
+  gtaxi_res_dt = rbind(gtaxi_res_dt, gtaxi_dt, fill = TRUE)
+  #cat(colnames(gtaxi_res_dt))
+  print(x)
+  print(nrow(gtaxi_dt))
+  print(nrow(gtaxi_res_dt))
+}
+
+gtaxi_clean = gtaxi_res_dt[,c(1,2,4,5,9,21,22)]
+
+gtaxi_df =
+  tibble(gtaxi_clean) %>%
+  rename(dropoff_datetime = lpep_dropoff_datetime,
+         pickup_datetime = lpep_pickup_datetime)
+
+# yellow taxi --------------------
+ytaxi_test_dt = fread("raw_data/data/yellow_taxi/2020_1.csv")
+ytest_dt_zone = merge.data.table(ytaxi_test_dt, PUloation_list, by.y = "LocationID", by.x = "PULocationID")
+ytest_dt_zone = merge.data.table(ytest_dt_zone, DOloation_list, by.y = "LocationID", by.x = "DOLocationID")
+
+# read, clean, and sample -----------
+ytaxi_res_dt = data.table(matrix(ncol = 0, nrow = 0))
+
+for (x in list.files("raw_data/data/yellow_taxi")) {
+  ytaxi_dt = fread(paste("raw_data/data/yellow_taxi/",x,sep = ""))
+  ytaxi_dt = merge.data.table(ytaxi_dt, PUloation_list, by.y = "LocationID", by.x = "PULocationID")
+  ytaxi_dt = merge.data.table(ytaxi_dt, DOloation_list, by.y = "LocationID", by.x = "DOLocationID")
+  ytaxi_dt = as.data.table(sample_n(as_tibble(ytaxi_dt),round(nrow(ytaxi_dt)/100)))# random sample 10%
+  ytaxi_res_dt = rbind(ytaxi_res_dt,ytaxi_dt, fill = TRUE)
+  #print(x)
+  #print(nrow(ytaxi_dt))
+  #print(nrow(ytaxi_res_dt))
+}
+
+ytaxi_clean = ytaxi_res_dt[,c(1,2,4,5,7,19,20)]
+
+
+ytaxi_df =
+  tibble(ytaxi_clean) %>%
+  rename(dropoff_datetime = tpep_dropoff_datetime,
+         pickup_datetime = tpep_pickup_datetime)
+
+
+## combine all taxi dataset --------
+
+taxi_df = bind_rows(gtaxi_df, ytaxi_df)
+
+taxi_df =
+  taxi_df %>%
+  mutate(duration = as.numeric(round(difftime(dropoff_datetime, pickup_datetime, units = "mins"), digits = 2)),
+         DOLocationID = factor(DOLocationID),
+         PULocationID = factor(PULocationID),
+         loc_pair = str_c(DOLocationID,"-", PULocationID),
+         month = month(pickup_datetime),
+         day_type = case_when(
+           wday(pickup_datetime, label = TRUE, abbr = FALSE) %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday") ~ "weekday",
+           wday(pickup_datetime, label =TRUE, abbr = FALSE) %in% c("Saturday", "Sunday") ~ "weekend"),
+         season = case_when(
+           month(pickup_datetime) %in% c(12,1,2)  ~ "winter",
+           month(pickup_datetime) %in% c(3,4,5)  ~ "spring",
+           month(pickup_datetime) %in% c(6,7,8)  ~ "summer",
+           month(pickup_datetime) %in% c(9,10,11)  ~ "fall"
+         ),
+         time_of_day = case_when(
+           hour(pickup_datetime) %in% c(7,8,9) ~ "rush_hour_am",
+           hour(pickup_datetime) %in% c(10,11,12,13,14,15) ~ "midday",
+           hour(pickup_datetime) %in% c(16,17,18) ~ "rush_hour_pm",
+           hour(pickup_datetime) %in% c(19,20,21,22,23) ~ "evening",
+           hour(pickup_datetime) %in% c(00,1,2,3,4,5,6) ~ "early_morning"
+         )
+  ) %>%
+  mutate(season = factor(season, levels = c("spring", "summer", "fall", "winter")),
+         time_of_day = factor(time_of_day, levels = c("early_morning", "rush_hour_am", "midday", "rush_hour_pm", "evening"))) %>%
+  filter(
+    trip_distance > 0 & trip_distance < quantile(trip_distance, 0.99),
+    duration > 0 & duration < quantile(duration, 0.99)) %>%
+  mutate(velocity = round(trip_distance/duration*96.56, digits = 2)) %>%
+  filter(velocity > 0 & velocity < quantile(velocity, 0.99))
+```
+
+
+In the citibike dataset, there are 299,309 observations and 10 variables. We incorporated the taxi zone map into this dataset and calculated the estimated trip distance using the geosphere package and formula below:
+
+*distance formula
+
+```{r eval = FALSE}
+library(geosphere)
+x = distm(c(40.73140, -73.99698), c(40.73140, -73.97303), fun = distHaversine)
+y = distm(c(40.76426, -73.97303), c(40.73140, -73.97303), fun = distHaversine)
+manhattan_angle = atan(x/y)[1,1]
+#  bike_dt --------------------------------
+bike_dt = fread("citibike_manhattan_sample.csv")
+bike_dt = bike_dt %>% janitor::clean_names() %>% as.data.table()
+head(bike_dt)
+bike_dt = bike_dt[, distance_hav := distHaversine(matrix(c(start_station_longitude, start_station_latitude), ncol = 2),
+                                   matrix(c(end_station_longitude, end_station_latitude), ncol = 2))]
+bike_dt = bike_dt[, distance_ew := distHaversine(matrix(c(start_station_longitude, start_station_latitude), ncol = 2),
+                                                  matrix(c(end_station_longitude, start_station_latitude), ncol = 2))]
+bike_dt = bike_dt[, distance_ns := distHaversine(matrix(c(end_station_longitude, start_station_latitude), ncol = 2),
+                                                  matrix(c(end_station_longitude, end_station_latitude), ncol = 2))]
+
+bike_dt = bike_dt[,angle_ns := atan(distance_ew/distance_ns)*2*(as.numeric(I(start_station_longitude < end_station_longitude))-0.5)*2*(as.numeric(I(start_station_latitude > end_station_latitude))-0.5) - manhattan_angle]
+bike_dt = bike_dt[,distance := distance_hav*(abs(cos(angle_ns))+abs(sin(angle_ns)))]
+colnames(bike_dt)
+
+fwrite(bike_dt,'bike_dt.csv')
+```
+
+In the MTA dataset, information such as arrival and departure time, line and direction of 1,000 train are given. The taxi zone map was also incorporated into the dataset and we ..... 
+
+*code
+
+
+__Data Descriptions:__      
+Our analysis were mainly based on two cleaned files, `test_dt_V1.csv` and `test_dt_mta.csv`. The file `test_dt_V1.csv` combined the sampled citibike and taxi datasets, and contain 6,241,738 observations and 12 variables in total. The file `test_dt_mta.csv` contains 894,085 observations and 12 variables. Below are the variables of interest:  
+
+- `DOLocationID`: TLC Taxi Zone of the dropoff location   
+- `PULocationID`: TLC Taxi Zone of the pickup location   
+- `tpep_pickup_datetime`: The date and time of the pickup  
+- `tpep_dropoff_datatime`: The date and time of the dropoff  
+- `trip_distance`: Trip distance in meter  
+- `time`: Travel time in second  
+- `velocity`: Travel velocity in meter per second  
+
+New variables were added for visualization purposes in the `taxi_sample.csv`, `bike_sample.csv` and `subway_sample.csv` files. Below are the variables added:
+
+- `Season`: winter(Dec-Feb), spring(Mar-May), summer(Jun-Aug), fall(Sep-Nov)
+- `Duration`: the difference between pick up time and drop off time for citibike and subway: the time difference of a trip between a location pair for subway
+- `Time of day`: rush_hour_am(7am - 10am), midday(10am - 4pm), rush_hour_pm(4pm - 7pm), evening(7pm - 12am), early_morning(12am - 7am)
+- `Velocity`: trip distance divided by duration
+- `Day Type`: weekday, weekend 
+
+
