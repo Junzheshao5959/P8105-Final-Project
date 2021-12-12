@@ -1,0 +1,85 @@
+---
+title: "Manhattan Bus"
+date: "11/24/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(data.table)
+library(geojsonR)
+library(sp)
+```
+
+```{r read bus data}
+#read bus data
+bus_data <- fread('data/bus/manhattan_bus_times.txt','sep' = ',')
+stop_data <- fread('data/bus/stops.txt','sep' = ',') %>%
+  select(stop_id,stop_lat,stop_lon)
+```
+
+```{r stop coordinate}
+#stop coordinate
+bus_coordinate_data <- inner_join(bus_data, stop_data, by = "stop_id")
+```
+
+
+```{r parse taxi zone geojson}
+#parse taxi zone geojson
+geoobject_list = FROM_GeoJson(url_file_string = "data/nyc_taxi_zone.geojson")
+manhattan_list = list()
+
+for (i in 1:length(geoobject_list[[1]])) {
+  if (geoobject_list$features[[i]]$properties$borough == "Manhattan") {
+    manhattan_list <- append(manhattan_list,geoobject_list$features[i])
+  }
+}
+```
+
+
+```{r check point in which geojson object}
+#check point in which geojson object
+identify_geojson <- function(latitude,longitude){
+  for (i in 1:length(manhattan_list)) {
+    longitude_region <- manhattan_list[[i]]$geometry$coordinates[[1]][,1]
+    latitude_region <- manhattan_list[[i]]$geometry$coordinates[[1]][,2]
+    if (point.in.polygon(longitude, latitude, longitude_region, latitude_region) >= 1) {
+      out <- paste(as.character(manhattan_list[[i]]$properties$zone),as.character(manhattan_list[[i]]$properties$location_id),sep = "@")
+      return(out)
+    }
+  }
+  return("out")
+}
+```
+
+```{r gecode coordinate}
+#gecode coordinate
+bus_neighborhood <- bus_coordinate_data %>%
+  mutate(
+    neighborhood = map2(stop_lat,stop_lon,identify_geojson)
+  ) %>%
+  filter(neighborhood != "out") %>%
+  separate(neighborhood, c("neighborhood","neighborhood_id"), sep = "@") %>%
+  mutate(
+    neighborhood_id  = as.numeric(neighborhood_id)
+  )
+```
+
+
+```{r reselect data}
+#reselect data
+bus_neighborhood_clean <- bus_neighborhood %>%
+  select(trip_id:stop_id,stop_lat:neighborhood_id) %>%
+  mutate(
+    bus_id = trip_id
+  ) %>%
+  separate(trip_id, sep = "_", into = c("split1","day","line","split2")) %>%
+  select(bus_id,day:line,arrival_time:neighborhood_id) %>%
+  mutate(
+    day = ifelse(str_detect(day, "Weekday"), "Weekday", ifelse(str_detect(day,"Sunday"), "Sunday", "Saturday"))
+  )
+
+write_csv(bus_neighborhood_clean, "data/bus/bus_schedule_clean.csv", append = FALSE)
+```
+

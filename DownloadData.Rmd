@@ -1,0 +1,155 @@
+---
+title: "download_data"
+date: "11/19/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(data.table)
+library(readr)
+library(RCurl)
+library(glue)
+```
+
+## Introduction
+
+This document is about downloading the data needed in the project.
+
+## Download Yellow Taxi data
+
+```{r yellow taxi}
+month <- 1:12
+year <- 2020:2021
+for (i in year) {
+  for (j in month) {
+    year_temp <- as.character(i)
+    month_temp <- as.character(j)
+    #download url
+    if (j < 10) {
+      url = glue("https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_{year_temp}-0{month_temp}.csv")
+    }
+    else {
+      url = glue("https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_{year_temp}-{month_temp}.csv")
+    }
+    print(url)
+    if (url.exists(url)) {
+      yellow_taxi_data <- fread(url, fill = TRUE)
+      filename <- glue("data/yellow_taxi/{year_temp}_{month_temp}.csv")
+      write_csv(yellow_taxi_data, filename, append = FALSE)
+    }
+  }
+}
+```
+
+## Download Green Taxi data
+
+```{r green taxi}
+month <- 1:12
+year <- 2020:2021
+for (i in year) {
+  for (j in month) {
+    year_temp <- as.character(i)
+    month_temp <- as.character(j)
+    if (j < 10) {
+      url = glue("https://s3.amazonaws.com/nyc-tlc/trip+data/green_tripdata_{year_temp}-0{month_temp}.csv")
+    }
+    else {
+      url = glue("https://s3.amazonaws.com/nyc-tlc/trip+data/green_tripdata_{year_temp}-{month_temp}.csv")
+    }
+    print(url)
+    if (url.exists(url)) {
+      green_taxi_data <- fread(url, fill = TRUE)
+      filename <- glue("data/green_taxi/{year_temp}_{month_temp}.csv")
+      write_csv(green_taxi_data, filename, append = FALSE)
+    }
+  }
+}
+```
+
+## Download For-Hire Vehicle data
+
+```{r fhv}
+month <- 1:12
+year <- 2020:2021
+for (i in year) {
+  for (j in month) {
+    year_temp <- as.character(i)
+    month_temp <- as.character(j)
+    if (j < 10) {
+      url = glue("https://s3.amazonaws.com/nyc-tlc/trip+data/fhv_tripdata_{year_temp}-0{month_temp}.csv")
+    }
+    else {
+      url = glue("https://s3.amazonaws.com/nyc-tlc/trip+data/fhv_tripdata_{year_temp}-{month_temp}.csv")
+    }
+    print(url)
+    if (url.exists(url)) {
+      fhv_taxi_data <- fread(url, fill = TRUE)
+      filename <- glue("data/fhv/{year_temp}_{month_temp}.csv")
+      write_csv(fhv_taxi_data, filename, append = FALSE)
+    }
+  }
+}
+```
+
+## Download High Volumn For-Hire Vehicle data
+
+```{r fhvhv}
+month <- 1:12
+year <- 2020:2021
+for (i in year) {
+  for (j in month) {
+    year_temp <- as.character(i)
+    month_temp <- as.character(j)
+    if (j < 10) {
+      url = glue("https://s3.amazonaws.com/nyc-tlc/trip+data/fhvhv_tripdata_{year_temp}-0{month_temp}.csv")
+    }
+    else {
+      url = glue("https://s3.amazonaws.com/nyc-tlc/trip+data/fhvhv_tripdata_{year_temp}-{month_temp}.csv")
+    }
+    print(url)
+    if (url.exists(url)) {
+      fhvhv_taxi_data <- fread(url, fill = TRUE)
+      filename <- glue("data/fhvhv/{year_temp}_{month_temp}.csv")
+      write_csv(fhvhv_taxi_data, filename, append = FALSE)
+    }
+  }
+}
+```
+
+## Download Citibike
+
+```{r citibike}
+month <- 1:12
+year <- 2020:2021
+for (i in year) {
+  for (j in month) {
+    year_temp <- as.character(i)
+    month_temp <- as.character(j)
+    if (j < 10) {
+      url <- glue("https://s3.amazonaws.com/tripdata/{year_temp}0{month_temp}-citibike-tripdata.csv.zip")
+    }
+    else {
+      url <- glue("https://s3.amazonaws.com/tripdata/{year_temp}{month_temp}-citibike-tripdata.csv.zip")
+    }
+    print(url)
+    if (url.exists(url)) {
+      #download zip and extract
+      temp <- tempfile()
+      download.file(url, temp, mode = "wb")
+      if (j < 10) {
+        csv_name <- glue("{year_temp}0{month_temp}-citibike-tripdata.csv")
+      }
+      else {
+        csv_name <- glue("{year_temp}{month_temp}-citibike-tripdata.csv")
+      }
+      unzip(temp, csv_name)
+      citibike_data <- fread(csv_name, fill = TRUE)
+      filename <- glue("data/citibike/{year_temp}_{month_temp}.csv")
+      write_csv(citibike_data, filename, append = FALSE)
+    }
+  }
+}
+```
+
