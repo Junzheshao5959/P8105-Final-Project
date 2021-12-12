@@ -78,12 +78,12 @@ ui <- dashboardPage(
   dashboardBody(
     fluidRow(
       useShinyalert(),
-      column(width = 9,
+      column(width = 8,
              box(width = NULL, solidHeader = TRUE,
                  leafletOutput("manhattan_map", height = "100vh")
              )
       ),
-      column(width = 3,
+      column(width = 4,
              radioButtons("type", "Vehicle Type",c("Bike" = "bike","Taxi" = "taxi"), inline = TRUE),
              sliderTextInput("month", "Month",choices = month, selected = month[c(1:12)],grid = TRUE),
              sliderTextInput("day","Day",choices = day, selected = day[c(1:7)],grid = TRUE),

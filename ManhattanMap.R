@@ -36,13 +36,33 @@ time <- c("Rush Hour AM","Midday","Rush Hour PM","Evening","Early Morning")
 time_start_dictionary <- c("Rush Hour AM" = 7, "Midday" = 10, "Rush Hour PM" = 16, "Evening" = 19, "Early Morning" = 0)
 time_end_dictionary <- c("Rush Hour AM" = 10, "Midday" = 16, "Rush Hour PM" = 19, "Evening" = 24, "Early Morning" = 7)
 
-#test function
-test_function <- function(month_in, week_in, data = test_dt, PU, DO, min_distance, max_distance){
-  x = test_dt[month %in% month_in][week %in% week_in][type == 'taxi'][PUZone == PU][DOZone == DO][trip_distance >= 1000 * min_distance][trip_distance <= 1000 * max_distance][,.(velocity,type)]
+
+#time function
+time_function <- function(month_in, week_in, data = test_dt, time_range, PU, DO, min_distance, max_distance){
+  x = test_dt[month %in% month_in][week %in% week_in][hour %in% time_range][type == 'taxi'][PUZone == PU][DOZone == DO][trip_distance >= 1000 * min_distance][trip_distance <= 1000 * max_distance][,.(time)]
   print(nrow(x))
-  y = test_dt[month %in% month_in][week %in% week_in][type == 'bike'][PUZone == PU][DOZone == DO][trip_distance >= 1000 * min_distance][trip_distance <= 1000 * max_distance][,.(velocity,type)]
+  y = test_dt[month %in% month_in][week %in% week_in][hour %in% time_range][type == 'bike'][PUZone == PU][DOZone == DO][trip_distance >= 1000 * min_distance][trip_distance <= 1000 * max_distance][,.(time)]
   print(nrow(y))
-  z = test_dt[month %in% month_in][week %in% week_in][type == 'MTA'][PUZone == PU][DOZone == DO][trip_distance >= 1000 * min_distance][trip_distance <= 1000 * max_distance][,.(velocity,type)]
+  z = test_dt[month %in% month_in][week %in% week_in][hour %in% time_range][type == 'MTA'][PUZone == PU][DOZone == DO][trip_distance >= 1000 * min_distance][trip_distance <= 1000 * max_distance][,.(time)]
+  print(nrow(z))
+
+  time_table <- data.frame(
+    Taxi = round(mean(x$time)/60,1),
+    Bike = round(mean(y$time)/60,1),
+    Subway = round(mean(z$time)/60,1)
+  )
+
+  return(time_table)
+}
+
+
+#test function
+test_function <- function(month_in, week_in, data = test_dt, time_range, PU, DO, min_distance, max_distance){
+  x = test_dt[month %in% month_in][week %in% week_in][hour %in% time_range][type == 'taxi'][PUZone == PU][DOZone == DO][trip_distance >= 1000 * min_distance][trip_distance <= 1000 * max_distance][,.(velocity,type)]
+  print(nrow(x))
+  y = test_dt[month %in% month_in][week %in% week_in][hour %in% time_range][type == 'bike'][PUZone == PU][DOZone == DO][trip_distance >= 1000 * min_distance][trip_distance <= 1000 * max_distance][,.(velocity,type)]
+  print(nrow(y))
+  z = test_dt[month %in% month_in][week %in% week_in][hour %in% time_range][type == 'MTA'][PUZone == PU][DOZone == DO][trip_distance >= 1000 * min_distance][trip_distance <= 1000 * max_distance][,.(velocity,type)]
   print(nrow(z))
 
   data <- data.frame()
@@ -121,6 +141,8 @@ test_function <- function(month_in, week_in, data = test_dt, PU, DO, min_distanc
 
   }
   else if (length(unique(data$type)) == 3) {
+    print(data)
+
     aov_result <- aov(velocity ~ type,data = data) %>%
       summary() %>%
       unlist()
@@ -132,7 +154,6 @@ test_function <- function(month_in, week_in, data = test_dt, PU, DO, min_distanc
       summary() %>%
       unlist()
 
-    print(2)
     data1 <- bind_rows(x,z)
 
     aov_result2 <- aov(velocity ~ type,data = data1) %>%
@@ -161,22 +182,24 @@ test_function <- function(month_in, week_in, data = test_dt, PU, DO, min_distanc
 #design the page
 ui <- dashboardPage(
   dashboardHeader(title = "Choose Best Vehicle",
-                  tags$li(a(href = 'http://www.google.com',icon("times-circle","fa-3x"),
+                  tags$li(a(href = 'https://kaitlynwyx.github.io/manhattan_transit.github.io/map.html',icon("times-circle","fa-3x"),
                             title = "Back to Website"),class = "dropdown")),
   dashboardSidebar(disable = TRUE),
   dashboardBody(
     fluidRow(
       useShinyalert(),
-      column(width = 9,
+      column(width = 8,
              box(width = NULL, solidHeader = TRUE,
                  leafletOutput("manhattan_map", height = "70vh")
              ),
+             dataTableOutput("speed_table"),
              dataTableOutput("time_table")
       ),
-      column(width = 3,
+      column(width = 4,
              sliderTextInput("month", "Month",choices = month, selected = month[c(1:12)],grid = TRUE),
-             sliderTextInput("day","Day",choices = day, selected = day[c(1:7)],grid = TRUE),
-             sliderInput("distance","Distance", min = 0, max = 25,value = c(0,25)),
+             sliderTextInput("day","Day (For better reuslt, select Monday to Friday or Weekend ^.^)",
+                             choices = day, selected = day[c(1:7)],grid = TRUE),
+             sliderInput("distance","Distance (Lower and Upper Limits)", min = 0, max = 25,value = c(0,25)),
              checkboxGroupInput("time","Time",choices = time, selected = time, inline = TRUE),
              actionButton("button", "Search")
       )
@@ -278,7 +301,7 @@ server <- function(input, output, session) {
     print(PU_zone)
     print(DO_zone)
 
-    aov_result <- test_function(month_in = c(month_choose), week_in = c(day_choose), PU = PU_zone, DO = DO_zone,
+    aov_result <- test_function(month_in = c(month_choose), week_in = c(day_choose), time_range = time_range,PU = PU_zone, DO = DO_zone,
                                 min_distance = distance_choose[1], max_distance = distance_choose[2])
 
     colnames(aov_result) <- c("Taxi (km/h)","Bike (km/h)", "Subway (km/h)", "P.value (anova)",
@@ -286,9 +309,20 @@ server <- function(input, output, session) {
 
     print(aov_result)
 
+    time_result <- time_function(month_in = c(month_choose), week_in = c(day_choose), time_range = time_range,PU = PU_zone, DO = DO_zone,
+                                 min_distance = distance_choose[1], max_distance = distance_choose[2])
+
+    colnames(time_result) <- c("Taxi (minutes)","Bike (minutes)","Subway (minutes)")
+    print(time_result)
+
     #example of table
-    output$time_table <- renderDataTable(
+    output$speed_table <- renderDataTable(
       dt <- DT::datatable(aov_result, options = list(dom = 't'))
+    )
+
+
+    output$time_table <- renderDataTable(
+      dt <- DT::datatable(time_result, options = list(dom = 't'))
     )
   })
 

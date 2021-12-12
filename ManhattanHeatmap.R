@@ -58,7 +58,7 @@ time_end_dictionary <- c("Rush Hour AM" = 10, "Midday" = 16, "Rush Hour PM" = 19
 #design
 ui <- dashboardPage(
   dashboardHeader(title = "Velocity Heatmap",
-                  tags$li(a(href = 'http://www.google.com',icon("times-circle","fa-3x"),
+                  tags$li(a(href = 'https://kaitlynwyx.github.io/manhattan_transit.github.io/map.html',icon("times-circle","fa-3x"),
                             title = "Back to Website"),class = "dropdown")),
   dashboardSidebar(disable = TRUE),
   dashboardBody(

@@ -88,3 +88,29 @@ ggplot(bike_weather_tmin, aes(tmin/10,bike_sum)) +
   geom_line() +
   geom_smooth(se = TRUE)
 ```
+
+```{r}
+reg_dt = merge.data.table(test_dt_date,weather_date, by = c("date"))
+as_tibble(reg_dt[type == "bike"]) %>% 
+  mutate(
+    velocity = velocity * 3.6,
+    prcp = prcp / 10,
+    month = factor(month),
+    week = factor(week),
+    PUZone = factor(PUZone),
+    DOZone = factor(DOZone)
+  ) %>%
+  lm(velocity ~ prcp + trip_distance + month + week + PUZone + DOZone,.) %>% summary()
+as_tibble(reg_dt[type == "taxi"]) %>%
+  mutate(
+    velocity = velocity * 3.6,
+    prcp = prcp / 10,
+    month = factor(month),
+    week = factor(week),
+    PUZone = factor(PUZone),
+    DOZone = factor(DOZone)
+  ) %>% 
+  lm(velocity ~ prcp + trip_distance + month + week + PUZone + DOZone,.) %>% summary()
+```
+
+
