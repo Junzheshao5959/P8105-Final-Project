@@ -1,0 +1,90 @@
+---
+title: "Rain Bike"
+author: "Keming Zhang"
+date: "12/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(data.table)
+library(shiny)
+library(shinyWidgets)
+library(leaflet)
+library(RJSONIO)
+library(rgdal)
+library(shinydashboard)
+library(DT)
+library(rlist)
+library(shinyalert)
+library(dtplyr)
+```
+
+```{r}
+citibike <- fread("data/citibike_manhattan.csv")
+weather <- fread("data/manhattan_weather.csv")
+```
+
+```{r}
+citibike_date <- citibike[, ':='(year = unclass(as.POSIXlt(start_time))$year, 
+                                  mon = unclass(as.POSIXlt(start_time))$mon, day = unclass(as.POSIXlt(start_time))$mday)]
+
+weather_date <- weather[, ':='(year = unclass(as.POSIXlt(date))$year, 
+                                  mon = unclass(as.POSIXlt(date))$mon, day = unclass(as.POSIXlt(date))$mday)]
+```
+
+
+```{r}
+bike_weather <- as.data.frame(inner_join(citibike_date,weather_date, by = c("year","mon","day")))
+bike_weather <- bike_weather %>%
+  filter(mon >= 6)
+```
+
+```{r}
+bike_weather_prcp <- bike_weather %>%
+  group_by(prcp) %>%
+  summarize(
+    bike_sum = n()
+  ) %>%
+  mutate(
+    bike_sum = log10(bike_sum)
+  )
+
+ggplot(bike_weather_prcp, aes(prcp,bike_sum)) + 
+  geom_point() + 
+  geom_line() +
+  geom_smooth(se = TRUE)
+```
+
+```{r}
+bike_weather_tmax <- bike_weather %>%
+  group_by(tmax) %>%
+  summarize(
+    bike_sum = n()
+  ) %>%
+  mutate(
+    bike_sum = log10(bike_sum)
+  )
+
+ggplot(bike_weather_tmax, aes(tmax/10,bike_sum)) + 
+  geom_point() + 
+  geom_line() +
+  geom_smooth(se = TRUE)
+```
+
+```{r}
+bike_weather_tmin <- bike_weather %>%
+  group_by(tmin) %>%
+  summarize(
+    bike_sum = n()
+  ) %>%
+  mutate(
+    bike_sum = log10(bike_sum)
+  )
+
+ggplot(bike_weather_tmin, aes(tmin/10,bike_sum)) + 
+  geom_point() + 
+  geom_line() +
+  geom_smooth(se = TRUE)
+```

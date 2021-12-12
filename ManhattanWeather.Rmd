@@ -1,0 +1,80 @@
+---
+title: "Manhattan Weather Data"
+author: "Keming Zhang"
+date: "12/6/2021"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(rnoaa)
+library(tidyverse)
+library(geojsonR)
+library(sp)
+library(data.table)
+library(glue)
+```
+
+
+```{r}
+# Get a list of all NY station IDs
+stations <- ghcnd_stations()
+nystation <-  stations %>% 
+  filter(state == "NY") %>%
+  filter(last_year == "2021") %>%
+  filter(first_year <= "2019")
+```
+
+
+
+```{r check point in which geojson object}
+#parse taxi zone geojson
+geoobject_list = FROM_GeoJson(url_file_string = "data/nyc_taxi_zone.geojson")
+manhattan_list = list()
+
+for (i in 1:length(geoobject_list[[1]])) {
+  if (geoobject_list$features[[i]]$properties$borough == "Manhattan") {
+    manhattan_list <- append(manhattan_list,geoobject_list$features[i])
+  }
+}
+
+#check point in which geojson object
+identify_geojson <- function(latitude,longitude){
+  for (i in 1:length(manhattan_list)) {
+    longitude_region <- manhattan_list[[i]]$geometry$coordinates[[1]][,1]
+    latitude_region <- manhattan_list[[i]]$geometry$coordinates[[1]][,2]
+    if (point.in.polygon(longitude, latitude, longitude_region, latitude_region) >= 1) {
+      out <- paste(as.character(manhattan_list[[i]]$properties$zone),as.character(manhattan_list[[i]]$properties$location_id),sep = "@")
+      return(out)
+    }
+  }
+  return("out")
+}
+```
+
+```{r manhattan weather station in neighborhoood}
+weather_station_neighborhood <- nystation %>%
+  mutate(
+    neighborhood = map2(latitude,longitude,identify_geojson)
+  ) %>%
+  filter(neighborhood != "out") %>%
+  separate(neighborhood, c("neighborhood","neighborhood_id"), sep = "@") %>%
+  mutate(
+    neighborhood_id  = as.numeric(neighborhood_id)
+  )
+
+unique(weather_station_neighborhood$id)
+```
+
+
+
+```{r}
+# Pull the desired weather data for Manhanttan
+manhattan_data <- meteo_pull_monitors("USW00094728", 
+                             date_min = "2020-01-01", 
+                             date_max = "2021-07-31", 
+                             var = c("all"))
+
+write_csv(manhattan_data, "data/manhattan_weather.csv", append = FALSE)
+```
+
